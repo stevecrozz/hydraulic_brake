@@ -5,14 +5,14 @@ class NoticeTest < Test::Unit::TestCase
   include DefinesConstants
 
   def configure
-    Airbrake::Configuration.new.tap do |config|
+    HydraulicBrake::Configuration.new.tap do |config|
       config.api_key = 'abc123def456'
     end
   end
 
   def build_notice(args = {})
     configuration = args.delete(:configuration) || configure
-    Airbrake::Notice.new(configuration.merge(args))
+    HydraulicBrake::Notice.new(configuration.merge(args))
   end
 
   def stub_request(attrs = {})
@@ -137,7 +137,7 @@ class NoticeTest < Test::Unit::TestCase
     array = ["user.rb:34:in `crazy'"]
     exception = build_exception
     exception.set_backtrace array
-    backtrace = Airbrake::Backtrace.parse(array)
+    backtrace = HydraulicBrake::Backtrace.parse(array)
     notice_from_exception = build_notice(:exception => exception)
 
 
@@ -161,9 +161,9 @@ class NoticeTest < Test::Unit::TestCase
     backtrace_array = ['my/file/backtrace:3']
     exception = build_exception
     exception.set_backtrace(backtrace_array)
-    Airbrake::Backtrace.expects(:parse).with(backtrace_array, {:filters => 'foo'})
+    HydraulicBrake::Backtrace.expects(:parse).with(backtrace_array, {:filters => 'foo'})
 
-    notice = Airbrake::Notice.new({:exception => exception, :backtrace_filters => 'foo'})
+    notice = HydraulicBrake::Notice.new({:exception => exception, :backtrace_filters => 'foo'})
   end
 
   should "set the error class from an exception or hash" do
@@ -217,7 +217,7 @@ class NoticeTest < Test::Unit::TestCase
   end
 
   should "set sensible defaults without an exception" do
-    backtrace = Airbrake::Backtrace.parse(build_backtrace_array)
+    backtrace = HydraulicBrake::Backtrace.parse(build_backtrace_array)
     notice = build_notice(:backtrace => build_backtrace_array)
 
     assert_equal 'Notification', notice.error_message
@@ -227,8 +227,8 @@ class NoticeTest < Test::Unit::TestCase
   end
 
   should "use the caller as the backtrace for an exception without a backtrace" do
-    filters = Airbrake::Configuration.new.backtrace_filters
-    backtrace = Airbrake::Backtrace.parse(caller, :filters => filters)
+    filters = HydraulicBrake::Configuration.new.backtrace_filters
+    backtrace = HydraulicBrake::Backtrace.parse(caller, :filters => filters)
     notice = build_notice(:exception => StandardError.new('error'), :backtrace => nil)
 
     assert_array_starts_with backtrace.lines, notice.backtrace.lines
@@ -264,7 +264,7 @@ class NoticeTest < Test::Unit::TestCase
 
   context "a Notice turned into XML" do
     setup do
-      Airbrake.configure do |config|
+      HydraulicBrake.configure do |config|
         config.api_key = "1234567890"
       end
 
@@ -395,7 +395,7 @@ class NoticeTest < Test::Unit::TestCase
     end
   end
 
-  ignored_error_classes = Airbrake::Configuration::IGNORE_DEFAULT
+  ignored_error_classes = HydraulicBrake::Configuration::IGNORE_DEFAULT
 
   ignored_error_classes.each do |ignored_error_class|
     should "ignore #{ignored_error_class} error by default" do

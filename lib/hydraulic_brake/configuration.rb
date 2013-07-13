@@ -1,8 +1,8 @@
-module Airbrake
+module HydraulicBrake
   # Used to set up and modify settings for the notifier.
   class Configuration
 
-    OPTIONS = [:api_key, :js_api_key, :backtrace_filters, :development_environments,
+    OPTIONS = [:api_key, :backtrace_filters, :development_environments,
         :development_lookup, :environment_name, :host,
         :http_open_timeout, :http_read_timeout, :ignore, :ignore_by_filters,
         :ignore_user_agent, :notifier_name, :notifier_url, :notifier_version,
@@ -13,13 +13,7 @@ module Airbrake
     # The API key for your project, found on the project edit form.
     attr_accessor :api_key
 
-    # If you're using the Javascript notifier and would want to separate
-    # Javascript notifications into another Airbrake project, specify
-    # its APi key here.
-    # Defaults to #api_key (of the base project)
-    attr_writer :js_api_key
-
-    # The host to connect to (defaults to airbrake.io).
+    # The host to connect to
     attr_accessor :host
 
     # The port on which your Airbrake server runs (defaults to 443 for secure
@@ -29,7 +23,9 @@ module Airbrake
     # +true+ for https connections, +false+ for http connections.
     attr_accessor :secure
 
-    # +true+ to use whatever CAs OpenSSL has installed on your system. +false+ to use the ca-bundle.crt file included in Airbrake itself (reccomended and default)
+    # +true+ to use whatever CAs OpenSSL has installed on your system. +false+
+    # to use the ca-bundle.crt file included in HydraulicBrake itself
+    # (reccomended and default)
     attr_accessor :use_system_ssl_cert_chain
 
     # The HTTP open timeout in seconds (defaults to 2).
@@ -82,7 +78,8 @@ module Airbrake
     # The path to the project in which the error occurred, such as the Rails.root
     attr_accessor :project_root
 
-    # The name of the notifier library being used to send notifications (such as "Airbrake Notifier")
+    # The name of the notifier library being used to send notifications (such
+    # as "HydraulicBrake Notifier")
     attr_accessor :notifier_name
 
     # The version of the notifier library being used to send notifications (such as "1.0.2")
@@ -91,16 +88,16 @@ module Airbrake
     # The url of the notifier library being used to send notifications
     attr_accessor :notifier_url
 
-    # The logger used by Airbrake
+    # The logger used by HydraulicBrake
     attr_accessor :logger
 
     # The text that the placeholder is replaced with. {{error_id}} is the actual error number.
     attr_accessor :user_information
 
-    # The framework Airbrake is configured to use
+    # The framework HydraulicBrake is configured to use
     attr_accessor :framework
 
-    # Should Airbrake catch exceptions from Rake tasks?
+    # Should HydraulicBrake catch exceptions from Rake tasks?
     # (boolean or nil; set to nil to catch exceptions when rake isn't running from a terminal; default is nil)
     attr_accessor :rescue_rake_exceptions
 
@@ -114,8 +111,8 @@ module Airbrake
 
     DEFAULT_BACKTRACE_FILTERS = [
       lambda { |line|
-        if defined?(Airbrake.configuration.project_root) && Airbrake.configuration.project_root.to_s != ''
-          line.sub(/#{Airbrake.configuration.project_root}/, "[PROJECT_ROOT]")
+        if defined?(HydraulicBrake.configuration.project_root) && HydraulicBrake.configuration.project_root.to_s != ''
+          line.sub(/#{HydraulicBrake.configuration.project_root}/, "[PROJECT_ROOT]")
         else
           line
         end
@@ -128,7 +125,7 @@ module Airbrake
           end
         end
       },
-      lambda { |line| line if line !~ %r{lib/airbrake} }
+      lambda { |line| line if line !~ %r{lib/hydraulic_brake} }
     ].freeze
 
     IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
@@ -145,7 +142,7 @@ module Airbrake
     def initialize
       @secure                   = false
       @use_system_ssl_cert_chain= false
-      @host                     = 'api.airbrake.io'
+      @host                     = ''
       @http_open_timeout        = 2
       @http_read_timeout        = 5
       @params_filters           = DEFAULT_PARAMS_FILTERS.dup
@@ -155,11 +152,11 @@ module Airbrake
       @ignore_user_agent        = []
       @development_environments = %w(development test cucumber)
       @development_lookup       = true
-      @notifier_name            = 'Airbrake Notifier'
+      @notifier_name            = 'HydraulicBrake Notifier'
       @notifier_version         = VERSION
-      @notifier_url             = 'https://github.com/airbrake/airbrake'
+      @notifier_url             = 'https://github.com/stevecrozz/hydraulic_brake'
       @framework                = 'Standalone'
-      @user_information         = 'Airbrake Error {{error_id}}'
+      @user_information         = 'HydraulicBrake Error {{error_id}}'
       @rescue_rake_exceptions   = nil
       @user_attributes          = DEFAULT_USER_ATTRIBUTES.dup
       @rake_environment_filters = []
@@ -188,8 +185,8 @@ module Airbrake
     #   end
     #
     # @param [Proc] block The new ignore filter
-    # @yieldparam [Hash] data The exception data given to +Airbrake.notify+
-    # @yieldreturn [Boolean] If the block returns true the exception will be ignored, otherwise it will be processed by airbrake.
+    # @yieldparam [Hash] data The exception data given to +HydraulicBrake.notify+
+    # @yieldreturn [Boolean] If the block returns true the exception will be ignored, otherwise it will be processed by hydraulic_brake.
     def ignore_by_filter(&block)
       self.ignore_by_filters << block
     end
@@ -251,7 +248,7 @@ module Airbrake
       end
     end
 
-    # Should Airbrake send notifications asynchronously
+    # Should HydraulicBrake send notifications asynchronously
     # (boolean, nil or callable; default is nil).
     # Can be used as callable-setter when block provided.
     def async(&block)
@@ -266,14 +263,6 @@ module Airbrake
       @async = use_default_or_this == true ?
         default_async_processor :
         use_default_or_this
-    end
-
-    def js_api_key
-      @js_api_key || self.api_key
-    end
-
-    def js_notifier=(*args)
-      warn '[AIRBRAKE] config.js_notifier has been deprecated and has no effect.  You should use <%= airbrake_javascript_notifier %> directly at the top of your layouts.  Be sure to place it before all other javascript.'
     end
 
     def ca_bundle_path
@@ -303,7 +292,7 @@ module Airbrake
     # Async notice delivery defaults to girl friday
     def default_async_processor
       queue = GirlFriday::WorkQueue.new(nil, :size => 3) do |notice|
-        Airbrake.sender.send_to_airbrake(notice)
+        HydraulicBrake.sender.send_to_airbrake(notice)
       end
       lambda {|notice| queue << notice}
     end

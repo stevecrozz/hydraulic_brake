@@ -8,7 +8,7 @@ Feature: Use the notifier in a plain Rack app
       """
       require 'logger'
       require 'rack'
-      require 'airbrake'
+      require 'hydraulic_brake'
 
       Airbrake.configure do |config|
         config.api_key = 'my_api_key'
@@ -28,7 +28,7 @@ Feature: Use the notifier in a plain Rack app
       """
       require 'logger'
       require 'rack'
-      require 'airbrake'
+      require 'hydraulic_brake'
 
       Airbrake.configure do |config|
         config.api_key = 'my_api_key'

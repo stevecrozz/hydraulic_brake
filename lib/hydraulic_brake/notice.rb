@@ -1,7 +1,7 @@
 require 'builder'
 require 'socket'
 
-module Airbrake
+module HydraulicBrake
   class Notice
 
     class << self
@@ -57,9 +57,6 @@ module Airbrake
     # The action (if any) that was called in this request
     attr_reader :action
 
-    # A hash of session data from the request
-    attr_reader :session_data
-
     # The path to the project that caused the error (usually Rails.root)
     attr_reader :project_root
 
@@ -72,7 +69,7 @@ module Airbrake
     # See Configuration#ignore_by_filters
     attr_reader :ignore_by_filters
 
-    # The name of the notifier library sending this notice, such as "Airbrake Notifier"
+    # The name of the notifier library sending this notice, such as "HydraulicBrake Notifier"
     attr_reader :notifier_name
 
     # The version number of the notifier library sending this notice, such as "2.1.3"
@@ -92,7 +89,7 @@ module Airbrake
     # Private writers for all the attributes
     attr_writer :exception, :api_key, :backtrace, :error_class, :error_message,
       :backtrace_filters, :parameters, :params_filters,
-      :session_data, :project_root, :url, :ignore,
+      :project_root, :url, :ignore,
       :ignore_by_filters, :notifier_name, :notifier_url, :notifier_version,
       :component, :action, :cgi_data, :environment_name, :hostname, :user
 
@@ -124,7 +121,7 @@ module Airbrake
       self.action              = args[:action] || parameters['action']
 
       self.environment_name = args[:environment_name]
-      self.cgi_data         = args[:cgi_data] || args[:rack_env]
+      self.cgi_data         = args[:cgi_data] || args[:rack_env] || {}
       self.backtrace        = Backtrace.parse(exception_attribute(:backtrace, caller), :filters => self.backtrace_filters)
       self.error_class      = exception_attribute(:error_class) {|exception| exception.class.name }
       self.error_message    = exception_attribute(:error_message, 'Notification') do |exception|
@@ -132,10 +129,9 @@ module Airbrake
       end
 
       self.hostname        = local_hostname
-      self.user = args[:user]
+      self.user = args[:user] || {}
 
       also_use_rack_params_filters
-      find_session_data
       clean_params
       clean_rack_request_data
     end
@@ -144,7 +140,7 @@ module Airbrake
     def to_xml
       builder = Builder::XmlMarkup.new
       builder.instruct!
-      xml = builder.notice(:version => Airbrake::API_VERSION) do |notice|
+      xml = builder.notice(:version => HydraulicBrake::API_VERSION) do |notice|
         notice.tag!("api-key", api_key)
         notice.notifier do |notifier|
           notifier.name(notifier_name)
@@ -165,9 +161,8 @@ module Airbrake
         if url ||
             controller ||
             action ||
-            !parameters.blank? ||
-            !cgi_data.blank? ||
-            !session_data.blank?
+            !parameters.empty? ||
+            !cgi_data.empty?
           notice.request do |request|
             request.url(url)
             request.component(controller)
@@ -175,11 +170,6 @@ module Airbrake
             unless parameters.nil? || parameters.empty?
               request.params do |params|
                 xml_vars_for(params, parameters)
-              end
-            end
-            unless session_data.nil? || session_data.empty?
-              request.session do |session|
-                xml_vars_for(session, session_data)
               end
             end
             unless cgi_data.nil? || cgi_data.empty?
@@ -194,7 +184,7 @@ module Airbrake
           env.tag!("environment-name", environment_name)
           env.tag!("hostname", hostname)
         end
-        unless user.blank?
+        unless user.empty?
           notice.tag!("current-user") do |u|
             u.tag!("id",user[:id])
             u.tag!("name",user[:name])
@@ -291,10 +281,6 @@ module Airbrake
         clean_unserializable_data_from(:cgi_data)
         filter(cgi_data)
       end
-      if session_data
-        clean_unserializable_data_from(:session_data)
-        filter(session_data)
-      end
     end
 
     def clean_rack_request_data
@@ -319,11 +305,6 @@ module Airbrake
       params_filters.any? do |filter|
         key.to_s.eql?(filter.to_s)
       end
-    end
-
-    def find_session_data
-      self.session_data = args[:session_data] || args[:session] || rack_session || {}
-      self.session_data = session_data[:data] if session_data[:data]
     end
 
     # Converts the mixed class instances and class names into just names

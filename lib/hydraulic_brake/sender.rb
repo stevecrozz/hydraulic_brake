@@ -1,4 +1,4 @@
-module Airbrake
+module HydraulicBrake
   # Sends out the notice to Airbrake
   class Sender
 
@@ -62,7 +62,7 @@ module Airbrake
       end
     rescue => e
       log :level => :error,
-        :message => "[Airbrake::Sender#send_to_airbrake] Cannot send notification. Error: #{e.class}" +
+        :message => "[HydraulicBrake::Sender#send_to_airbrake] Cannot send notification. Error: #{e.class}" +
         " - #{e.message}\nBacktrace:\n#{e.backtrace.join("\n\t")}"
 
       nil
@@ -91,13 +91,13 @@ module Airbrake
 
     def log(opts = {})
       opts[:logger].send opts[:level], LOG_PREFIX + opts[:message] if opts[:logger]
-      Airbrake.report_environment_info
-      Airbrake.report_response_body(opts[:response].body) if opts[:response] && opts[:response].respond_to?(:body)
-      Airbrake.report_notice(opts[:notice]) if opts[:notice]
+      HydraulicBrake.report_environment_info
+      HydraulicBrake.report_response_body(opts[:response].body) if opts[:response] && opts[:response].respond_to?(:body)
+      HydraulicBrake.report_notice(opts[:notice]) if opts[:notice]
     end
 
     def logger
-      Airbrake.logger
+      HydraulicBrake.logger
     end
 
     def setup_http_connection
@@ -111,7 +111,7 @@ module Airbrake
       if secure?
         http.use_ssl     = true
 
-        http.ca_file      = Airbrake.configuration.ca_bundle_path
+        http.ca_file      = HydraulicBrake.configuration.ca_bundle_path
         http.verify_mode  = OpenSSL::SSL::VERIFY_PEER
       else
         http.use_ssl     = false
@@ -120,7 +120,7 @@ module Airbrake
       http
     rescue => e
       log :level => :error,
-          :message => "[Airbrake::Sender#setup_http_connection] Failure initializing the HTTP connection.\n" +
+          :message => "[HydraulicBrake::Sender#setup_http_connection] Failure initializing the HTTP connection.\n" +
                       "Error: #{e.class} - #{e.message}\nBacktrace:\n#{e.backtrace.join("\n\t")}"
       raise e
     end

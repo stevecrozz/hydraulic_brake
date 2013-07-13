@@ -1,15 +1,15 @@
 # -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
-require "airbrake/version"
+require "hydraulic_brake/version"
 
 Gem::Specification.new do |s|
-  s.name        = %q{airbrake}
-  s.version     = Airbrake::VERSION.dup
-  s.summary     = %q{Send your application errors to our hosted service and reclaim your inbox.}
+  s.name        = %q{hydraulic_brake}
+  s.version     = HydraulicBrake::VERSION.dup
+  s.summary     = %q{Send your application errors to Airbrake}
 
   s.require_paths = ["lib"]
-  s.files         = Dir["{generators/**/*,lib/**/*,rails/**/*,resources/*,script/*}"]  +
-    %w(airbrake.gemspec CHANGELOG Gemfile Guardfile INSTALL MIT-LICENSE Rakefile README_FOR_HEROKU_ADDON.md README.md TESTING.md SUPPORTED_RAILS_VERSIONS install.rb)
+  s.files         = Dir["{generators/**/*,lib/**/*,resources/*,script/*}"]  +
+    %w(hydraulic_brake.gemspec Gemfile Guardfile INSTALL MIT-LICENSE Rakefile README.md install.rb)
   s.test_files    = Dir.glob("{test,spec,features}/**/*")
 
   s.add_runtime_dependency("builder")
@@ -31,9 +31,9 @@ Gem::Specification.new do |s|
   s.add_development_dependency("guard-test"               )
   s.add_development_dependency("simplecov"                )
 
-  s.authors = ["Airbrake"]
-  s.email   = %q{support@airbrake.io}
-  s.homepage = "http://www.airbrake.io"
+  s.authors = ["Stephen Crosby"]
+  s.email   = %q{stevecrozz@gmail.com}
+  s.homepage = "http://github.com/stevecrozz/hydraulic_brake"
 
   s.platform = Gem::Platform::RUBY
 end

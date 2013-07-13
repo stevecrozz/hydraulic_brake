@@ -16,47 +16,47 @@ class NotifierTest < Test::Unit::TestCase
   end
 
   def assert_sent(notice, notice_args)
-    assert_received(Airbrake::Notice, :new) {|expect| expect.with(has_entries(notice_args)) }
-    assert_received(Airbrake.sender, :send_to_airbrake) {|expect| expect.with(notice) }
+    assert_received(HydraulicBrake::Notice, :new) {|expect| expect.with(has_entries(notice_args)) }
+    assert_received(HydraulicBrake.sender, :send_to_airbrake) {|expect| expect.with(notice) }
   end
 
   def set_public_env
-    Airbrake.configure { |config| config.environment_name = 'production' }
+    HydraulicBrake.configure { |config| config.environment_name = 'production' }
   end
 
   def set_development_env
-    Airbrake.configure { |config| config.environment_name = 'development' }
+    HydraulicBrake.configure { |config| config.environment_name = 'development' }
   end
 
   should "yield and save a configuration when configuring" do
     yielded_configuration = nil
-    Airbrake.configure do |config|
+    HydraulicBrake.configure do |config|
       yielded_configuration = config
     end
 
-    assert_kind_of Airbrake::Configuration, yielded_configuration
-    assert_equal yielded_configuration, Airbrake.configuration
+    assert_kind_of HydraulicBrake::Configuration, yielded_configuration
+    assert_equal yielded_configuration, HydraulicBrake.configuration
   end
 
   should "not remove existing config options when configuring twice" do
     first_config = nil
-    Airbrake.configure do |config|
+    HydraulicBrake.configure do |config|
       first_config = config
     end
-    Airbrake.configure do |config|
+    HydraulicBrake.configure do |config|
       assert_equal first_config, config
     end
   end
 
   should "configure the sender" do
     sender = stub_sender
-    Airbrake::Sender.stubs(:new => sender)
+    HydraulicBrake::Sender.stubs(:new => sender)
     configuration = nil
 
-    Airbrake.configure { |yielded_config| configuration = yielded_config }
+    HydraulicBrake.configure { |yielded_config| configuration = yielded_config }
 
-    assert_received(Airbrake::Sender, :new) { |expect| expect.with(configuration) }
-    assert_equal sender, Airbrake.sender
+    assert_received(HydraulicBrake::Sender, :new) { |expect| expect.with(configuration) }
+    assert_equal sender, HydraulicBrake.sender
   end
 
   should "create and send a notice for an exception" do
@@ -65,7 +65,7 @@ class NotifierTest < Test::Unit::TestCase
     stub_sender!
     notice = stub_notice!
 
-    Airbrake.notify(exception)
+    HydraulicBrake.notify(exception)
 
     assert_sent notice, :exception => exception
   end
@@ -76,7 +76,7 @@ class NotifierTest < Test::Unit::TestCase
     notice_args = { :error_message => 'uh oh' }
     stub_sender!
 
-    Airbrake.notify(notice_args)
+    HydraulicBrake.notify(notice_args)
 
     assert_sent(notice, notice_args)
   end
@@ -87,9 +87,9 @@ class NotifierTest < Test::Unit::TestCase
     notice_args = { :error_message => 'uh oh' }
     stub_sender!
 
-    Airbrake.notify(notice_args)
+    HydraulicBrake.notify(notice_args)
 
-    assert_received(Airbrake::Notice, :new) {|expect| expect.with(Not(has_key(:exception))) }
+    assert_received(HydraulicBrake::Notice, :new) {|expect| expect.with(Not(has_key(:exception))) }
   end
 
   should "create and send a notice for an exception that responds to to_hash" do
@@ -100,7 +100,7 @@ class NotifierTest < Test::Unit::TestCase
     exception.stubs(:to_hash).returns(notice_args)
     stub_sender!
 
-    Airbrake.notify(exception)
+    HydraulicBrake.notify(exception)
 
     assert_sent(notice, notice_args.merge(:exception => exception))
   end
@@ -112,7 +112,7 @@ class NotifierTest < Test::Unit::TestCase
     notice_args = { :error_message => 'uh oh' }
     stub_sender!
 
-    Airbrake.notify(exception, notice_args)
+    HydraulicBrake.notify(exception, notice_args)
 
     assert_sent(notice, notice_args.merge(:exception => exception))
   end
@@ -121,8 +121,8 @@ class NotifierTest < Test::Unit::TestCase
     set_development_env
     sender = stub_sender!
 
-    Airbrake.notify(build_exception)
-    Airbrake.notify_or_ignore(build_exception)
+    HydraulicBrake.notify(build_exception)
+    HydraulicBrake.notify_or_ignore(build_exception)
 
     assert_received(sender, :send_to_airbrake) {|expect| expect.never }
   end
@@ -134,30 +134,30 @@ class NotifierTest < Test::Unit::TestCase
     notice = stub_notice!
     notice.stubs(:ignore? => true)
 
-    Airbrake.notify_or_ignore(exception)
+    HydraulicBrake.notify_or_ignore(exception)
 
     assert_received(sender, :send_to_airbrake) {|expect| expect.never }
   end
 
   should "deliver exception in async-mode" do
-    Airbrake.configure do |config|
+    HydraulicBrake.configure do |config|
       config.environment_name = 'production'
       config.async do |notice|
-        Airbrake.sender.send_to_airbrake(notice)
+        HydraulicBrake.sender.send_to_airbrake(notice)
       end
     end
     exception = build_exception
     sender = stub_sender!
     notice = stub_notice!
 
-    Airbrake.notify(exception)
+    HydraulicBrake.notify(exception)
 
     assert_sent(notice, :exception => exception)
   end
 
   should "pass notice in async-mode" do
     received_notice = nil
-    Airbrake.configure do |config|
+    HydraulicBrake.configure do |config|
       config.environment_name = 'production'
       config.async {|notice| received_notice = notice}
     end
@@ -165,7 +165,7 @@ class NotifierTest < Test::Unit::TestCase
     sender = stub_sender!
     notice = stub_notice!
 
-    Airbrake.notify(exception)
+    HydraulicBrake.notify(exception)
 
     assert_equal received_notice, notice
   end
@@ -177,7 +177,7 @@ class NotifierTest < Test::Unit::TestCase
     notice = stub_notice!
     notice.stubs(:ignore? => true)
 
-    Airbrake.notify(exception)
+    HydraulicBrake.notify(exception)
 
     assert_sent(notice, :exception => exception)
   end
@@ -187,11 +187,11 @@ class NotifierTest < Test::Unit::TestCase
     config_opts = { 'one' => 'two', 'three' => 'four' }
     notice = stub_notice!
     stub_sender!
-    Airbrake.configuration = stub('config', :merge => config_opts, :public? => true,:async? => nil)
+    HydraulicBrake.configuration = stub('config', :merge => config_opts, :public? => true,:async? => nil)
 
-    Airbrake.notify(exception)
+    HydraulicBrake.notify(exception)
 
-    assert_received(Airbrake::Notice, :new) do |expect|
+    assert_received(HydraulicBrake::Notice, :new) do |expect|
       expect.with(has_entries(config_opts))
     end
   end
@@ -200,7 +200,7 @@ class NotifierTest < Test::Unit::TestCase
     setup do
       @params    = { :controller => "users", :action => "create" }
       @exception = build_exception
-      @hash      = Airbrake.build_lookup_hash_for(@exception, @params)
+      @hash      = HydraulicBrake.build_lookup_hash_for(@exception, @params)
     end
 
     should "set action" do
@@ -219,7 +219,7 @@ class NotifierTest < Test::Unit::TestCase
       assert_match /test\/helper\.rb$/, @hash[:file]
     end
 
-    should "set rails_env to production" do
+    should "set env to production" do
       assert_equal 'production', @hash[:environment_name]
     end
 
@@ -230,14 +230,14 @@ class NotifierTest < Test::Unit::TestCase
     should "not set file or line number with no backtrace" do
       @exception.stubs(:backtrace).returns([])
 
-      @hash = Airbrake.build_lookup_hash_for(@exception)
+      @hash = HydraulicBrake.build_lookup_hash_for(@exception)
 
       assert_nil @hash[:line_number]
       assert_nil @hash[:file]
     end
 
     should "not set action or controller when not provided" do
-      @hash = Airbrake.build_lookup_hash_for(@exception)
+      @hash = HydraulicBrake.build_lookup_hash_for(@exception)
 
       assert_nil @hash[:action]
       assert_nil @hash[:controller]
@@ -253,7 +253,7 @@ class NotifierTest < Test::Unit::TestCase
       end
 
       should "unwrap exceptions that provide #original_exception" do
-        @hash = Airbrake.build_lookup_hash_for(@exception)
+        @hash = HydraulicBrake.build_lookup_hash_for(@exception)
         assert_equal "NotifierTest::OriginalException", @hash[:error_class]
       end
     end
@@ -268,7 +268,7 @@ class NotifierTest < Test::Unit::TestCase
       end
 
       should "unwrap exceptions that provide #continued_exception" do
-        @hash = Airbrake.build_lookup_hash_for(@exception)
+        @hash = HydraulicBrake.build_lookup_hash_for(@exception)
         assert_equal "NotifierTest::ContinuedException", @hash[:error_class]
       end
     end

@@ -12,8 +12,8 @@ class ConfigurationTest < Test::Unit::TestCase
     assert_config_default :project_root,        nil
     assert_config_default :environment_name,    nil
     assert_config_default :logger,              nil
-    assert_config_default :notifier_version,    Airbrake::VERSION
-    assert_config_default :notifier_name,       'Airbrake Notifier'
+    assert_config_default :notifier_version,    HydraulicBrake::VERSION
+    assert_config_default :notifier_name,       'HydraulicBrake Notifier'
     assert_config_default :notifier_url,        'https://github.com/airbrake/airbrake'
     assert_config_default :secure,              false
     assert_config_default :host,                'api.airbrake.io'
@@ -22,46 +22,46 @@ class ConfigurationTest < Test::Unit::TestCase
     assert_config_default :ignore_by_filters,   []
     assert_config_default :ignore_user_agent,   []
     assert_config_default :params_filters,
-                          Airbrake::Configuration::DEFAULT_PARAMS_FILTERS
+                          HydraulicBrake::Configuration::DEFAULT_PARAMS_FILTERS
     assert_config_default :backtrace_filters,
-                          Airbrake::Configuration::DEFAULT_BACKTRACE_FILTERS
+                          HydraulicBrake::Configuration::DEFAULT_BACKTRACE_FILTERS
     assert_config_default :rake_environment_filters, []
     assert_config_default :ignore,
-                          Airbrake::Configuration::IGNORE_DEFAULT
+                          HydraulicBrake::Configuration::IGNORE_DEFAULT
     assert_config_default :development_lookup, true
     assert_config_default :framework, 'Standalone'
     assert_config_default :async, nil
   end
 
   should "set GirlFriday-callable for async=true" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.async = true
     assert config.async.respond_to?(:call)
   end
 
   should "set provided-callable for async {}" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.async {|notice| :ok}
     assert config.async.respond_to?(:call)
     assert_equal :ok, config.async.call
   end
 
   should "provide default values for secure connections" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.secure = true
     assert_equal 443, config.port
     assert_equal 'https', config.protocol
   end
 
   should "provide default values for insecure connections" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.secure = false
     assert_equal 80, config.port
     assert_equal 'http', config.protocol
   end
 
   should "not cache inferred ports" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.secure = false
     config.port
     config.secure = true
@@ -93,7 +93,7 @@ class ConfigurationTest < Test::Unit::TestCase
   end
 
   should "act like a hash" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     hash = config.to_hash
     [:api_key, :backtrace_filters, :development_environments,
      :environment_name, :host, :http_open_timeout,
@@ -106,7 +106,7 @@ class ConfigurationTest < Test::Unit::TestCase
   end
 
   should "be mergable" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     hash = config.to_hash
     assert_equal hash.merge(:key => 'value'), config.merge(:key => 'value')
   end
@@ -120,7 +120,7 @@ class ConfigurationTest < Test::Unit::TestCase
   end
 
   should "warn when attempting to write js_notifier" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.
       expects(:warn).
       with(regexp_matches(/deprecated/i))
@@ -148,7 +148,7 @@ class ConfigurationTest < Test::Unit::TestCase
   end
 
   should "allow ignored exceptions to be appended" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     original_filters = config.ignore.dup
     new_filter = 'hello'
     config.ignore << new_filter
@@ -164,53 +164,53 @@ class ConfigurationTest < Test::Unit::TestCase
   end
 
   should "use development and test as development environments by default" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     assert_same_elements %w(development test cucumber), config.development_environments
   end
 
   should "be public in a public environment" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.development_environments = %w(development)
     config.environment_name = 'production'
     assert config.public?
   end
 
   should "not be public in a development environment" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.development_environments = %w(staging)
     config.environment_name = 'staging'
     assert !config.public?
   end
 
   should "be public without an environment name" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     assert config.public?
   end
 
   should "use the assigned logger if set" do
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.logger = "CUSTOM LOGGER"
     assert_equal "CUSTOM LOGGER", config.logger
   end
 
   should 'give a new instance if non defined' do
-    Airbrake.configuration = nil
-    assert_kind_of Airbrake::Configuration, Airbrake.configuration
+    HydraulicBrake.configuration = nil
+    assert_kind_of HydraulicBrake::Configuration, HydraulicBrake.configuration
   end
 
   def assert_config_default(option, default_value, config = nil)
-    config ||= Airbrake::Configuration.new
+    config ||= HydraulicBrake::Configuration.new
     assert_equal default_value, config.send(option)
   end
 
   def assert_config_overridable(option, value = 'a value')
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     config.send(:"#{option}=", value)
     assert_equal value, config.send(option)
   end
 
   def assert_appends_value(option, &block)
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     original_values = config.send(option).dup
     block ||= lambda do |config|
       new_value = 'hello'
@@ -222,7 +222,7 @@ class ConfigurationTest < Test::Unit::TestCase
   end
 
   def assert_replaces(option, setter)
-    config = Airbrake::Configuration.new
+    config = HydraulicBrake::Configuration.new
     new_value = 'hello'
     config.send(setter, [new_value])
     assert_equal [new_value], config.send(option)

@@ -19,7 +19,7 @@ require 'rack'
 require 'bourne'
 require 'sham_rack'
 
-require "airbrake"
+require "hydraulic_brake"
 
 begin require 'redgreen'; rescue LoadError; end
 
@@ -29,7 +29,7 @@ module TestMethods
   end
 
   def do_raise
-    raise "Airbrake"
+    raise "HydraulicBrake"
   end
 
   def do_not_raise
@@ -96,7 +96,7 @@ class Test::Unit::TestCase
   end
 
   def stub_sender!
-    Airbrake.sender = stub_sender
+    HydraulicBrake.sender = stub_sender
   end
 
   def stub_notice
@@ -105,29 +105,29 @@ class Test::Unit::TestCase
 
   def stub_notice!
      stub_notice.tap do |notice|
-      Airbrake::Notice.stubs(:new => notice)
+      HydraulicBrake::Notice.stubs(:new => notice)
     end
   end
 
   def create_dummy
-    Airbrake::DummySender.new
+    HydraulicBrake::DummySender.new
   end
 
   def reset_config
-    Airbrake.configuration = nil
-    Airbrake.configure do |config|
+    HydraulicBrake.configuration = nil
+    HydraulicBrake.configure do |config|
       config.api_key = 'abc123'
     end
   end
 
   def clear_backtrace_filters
-    Airbrake.configuration.backtrace_filters.clear
+    HydraulicBrake.configuration.backtrace_filters.clear
   end
 
   def build_exception(opts = {})
-    backtrace = ["airbrake/test/helper.rb:132:in `build_exception'",
-                 "airbrake/test/backtrace.rb:4:in `build_notice_data'",
-                 "/var/lib/gems/1.8/gems/airbrake-2.4.5/rails/init.rb:2:in `send_exception'"]
+    backtrace = ["hydraulic_brake/test/helper.rb:132:in `build_exception'",
+                 "hydraulic_brake/test/backtrace.rb:4:in `build_notice_data'",
+                 "/var/lib/gems/1.8/gems/hydraulic_brake-2.4.5/rails/init.rb:2:in `send_exception'"]
     opts = {:backtrace => backtrace}.merge(opts)
     BacktracedException.new(opts)
   end
@@ -153,11 +153,11 @@ class Test::Unit::TestCase
   end
 
   def assert_caught_and_sent
-    assert !Airbrake.sender.collected.empty?
+    assert !HydraulicBrake.sender.collected.empty?
   end
 
   def assert_caught_and_not_sent
-    assert Airbrake.sender.collected.empty?
+    assert HydraulicBrake.sender.collected.empty?
   end
 
   def assert_array_starts_with(expected, actual)
@@ -177,13 +177,13 @@ class Test::Unit::TestCase
   end
 
   def assert_logged(expected)
-    assert_received(Airbrake, :write_verbose_log) do |expect|
+    assert_received(HydraulicBrake, :write_verbose_log) do |expect|
       expect.with {|actual| actual =~ expected }
     end
   end
 
   def assert_not_logged(expected)
-    assert_received(Airbrake, :write_verbose_log) do |expect|
+    assert_received(HydraulicBrake, :write_verbose_log) do |expect|
       expect.with {|actual| actual =~ expected }.never
     end
   end
