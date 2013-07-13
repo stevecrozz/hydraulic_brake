@@ -1,7 +1,6 @@
 require 'net/http'
 require 'uri'
 
-# Capistrano tasks for notifying Airbrake of deploys
 module HydraulicBrakeTasks
 
   # Alerts Airbrake of a deploy.

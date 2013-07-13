@@ -43,13 +43,6 @@ task :hydraulic_brake_not_yet_configured do
   raise_exception
 end
 
-module HydraulicBrake
-  def self.notify_or_ignore(*args)
-    # TODO if you need to check more params, you'll have to use json.dump or something
-    $stderr.puts "hydraulic_brake #{args[1][:component]}"
-  end
-end
-
 def stub_empty_sender
   HydraulicBrake.sender = nil
 end

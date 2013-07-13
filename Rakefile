@@ -9,7 +9,7 @@ rescue LoadError
 end
 require './lib/hydraulic_brake/version'
 
-FEATURES = ["sinatra","rack","metal","user_informer","rake"]
+FEATURES = ["sinatra","metal","rake"]
 
 desc 'Default: run unit tests.'
 task :default => [:test, "cucumber:all"] + FEATURES
@@ -120,9 +120,6 @@ task :clobber => [:clobber_rdoc, :clobber_package]
 LOCAL_GEM_ROOT = File.join(GEM_ROOT, 'tmp', 'local_gems').freeze
 LOCAL_GEMS =
   [
-    ["rack","1.3.2"],
-    ['sham_rack', nil],
-    ['capistrano', nil],
     ['sqlite3-ruby', nil],
     ["therubyracer",nil],
     ["sinatra",nil]

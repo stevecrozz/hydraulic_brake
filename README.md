@@ -26,7 +26,7 @@ HydraulicBrake#notify
       }
       my_unpredicable_method(params)
     rescue => e
-      HydraulicBrake.notify_or_ignore(
+      HydraulicBrake.notify(
         :error_class   => "Special Error",
         :error_message => "Special Error: #{e.message}",
         :parameters    => params
@@ -49,7 +49,7 @@ You can override any of those parameters.
 
 One common request we see is to send shell environment variables along with
 manual exception notification.  We recommend sending them along with CGI data
-or Rack environment (:cgi_data or :rack_env keys, respectively.)
+or session data (:cgi_data or :session_data keys, respectively.)
 
 See HydraulicBrake::Notice#initialize in lib/hydraulic_brake/notice.rb for
 more details.
@@ -57,14 +57,8 @@ more details.
 Tracking deployments in HydraulicBrake
 --------------------------------
 
-When HydraulicBrake is installed as a gem, you need to add
-
-    require 'hydraulic_brake/capistrano'
-
-to your deploy.rb
-
-If you don't use Capistrano, then you can use the following rake task from your
-deployment process to notify Airbrake:
+You can use the following rake task from your deployment process to
+notify Airbrake of deployments:
 
     rake hydraulicbrake:deploy TO=#{env} REVISION=#{current_revision} REPO=#{repository} USER=#{local_user}
 

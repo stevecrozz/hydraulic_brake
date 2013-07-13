@@ -7,7 +7,6 @@ require 'hydraulic_brake/configuration'
 require 'hydraulic_brake/notice'
 require 'hydraulic_brake/sender'
 require 'hydraulic_brake/backtrace'
-require 'hydraulic_brake/user_informer'
 
 module HydraulicBrake
   API_VERSION = "2.3"
@@ -99,8 +98,7 @@ module HydraulicBrake
     #   (or the message you want to log)
     # @option opts [String] :backtrace A backtrace, usually obtained with
     #   +caller+
-    # @option opts [String] :rack_env The Rack environment
-    # @option opts [String] :session The contents of the user's session
+    # @option opts [String] :session_data The contents of the user's session
     # @option opts [String] :environment_name The application environment name
     def notify(exception, opts = {})
       send_notice(build_notice_for(exception, opts))

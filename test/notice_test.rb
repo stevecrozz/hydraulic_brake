@@ -41,46 +41,11 @@ class NoticeTest < Test::Unit::TestCase
                  "#{attribute} was not correctly set from a hash"
   end
 
-  def assert_serializes_hash(attribute)
-    [File.open(__FILE__), Proc.new { puts "boo!" }, Module.new].each do |object|
-      hash = {
-        :strange_object => object,
-        :sub_hash => {
-          :sub_object => object
-        },
-        :array => [object]
-      }
-      notice = build_notice(attribute => hash)
-      hash = notice.send(attribute)
-      assert_equal object.to_s, hash[:strange_object], "objects should be serialized"
-      assert_kind_of Hash, hash[:sub_hash], "subhashes should be kept"
-      assert_equal object.to_s, hash[:sub_hash][:sub_object], "subhash members should be serialized"
-      assert_kind_of Array, hash[:array], "arrays should be kept"
-      assert_equal object.to_s, hash[:array].first, "array members should be serialized"
-    end
-  end
-
   def assert_valid_notice_document(document)
     xsd_path = File.join(File.dirname(__FILE__), "airbrake_2_3.xsd")
     schema = Nokogiri::XML::Schema.new(IO.read(xsd_path))
     errors = schema.validate(document)
     assert errors.empty?, errors.collect{|e| e.message }.join
-  end
-
-  def assert_filters_hash(attribute)
-    filters  = ["abc", :def]
-    original = { 'abc' => "123", 'def' => "456", 'ghi' => "789", 'nested' => { 'abc' => '100' },
-      'something_with_abc' => 'match the entire string'}
-    filtered = { 'abc'    => "[FILTERED]",
-                 'def'    => "[FILTERED]",
-                 'something_with_abc' => "match the entire string",
-                 'ghi'    => "789",
-                 'nested' => { 'abc' => '[FILTERED]' } }
-
-    notice = build_notice(:params_filters => filters, attribute => original)
-
-    assert_equal(filtered,
-                 notice.send(attribute))
   end
 
   def build_backtrace_array
@@ -184,12 +149,6 @@ class NoticeTest < Test::Unit::TestCase
     assert_equal notice_from_hash.parameters, parameters
   end
 
-  should "accept session data from a session[:data] hash" do
-    data = { 'one' => 'two' }
-    notice = build_notice(:session => { :data => data })
-    assert_equal data, notice.session_data
-  end
-
   should "accept session data from a session_data hash" do
     data = { 'one' => 'two' }
     notice = build_notice(:session_data => data)
@@ -232,34 +191,6 @@ class NoticeTest < Test::Unit::TestCase
     notice = build_notice(:exception => StandardError.new('error'), :backtrace => nil)
 
     assert_array_starts_with backtrace.lines, notice.backtrace.lines
-  end
-
-  should "convert unserializable objects to strings" do
-    assert_serializes_hash(:parameters)
-    assert_serializes_hash(:cgi_data)
-    assert_serializes_hash(:session_data)
-  end
-
-  should "filter parameters" do
-    assert_filters_hash(:parameters)
-  end
-
-  should "filter cgi data" do
-    assert_filters_hash(:cgi_data)
-  end
-
-  should "filter session" do
-    assert_filters_hash(:session_data)
-  end
-
-  should "remove rack.request.form_vars" do
-    original = {
-      "rack.request.form_vars" => "story%5Btitle%5D=The+TODO+label",
-      "abc" => "123"
-    }
-
-    notice = build_notice(:cgi_data => original)
-    assert_equal({"abc" => "123"}, notice.cgi_data)
   end
 
   context "a Notice turned into XML" do
@@ -362,48 +293,6 @@ class NoticeTest < Test::Unit::TestCase
     end
   end
 
-  should "not ignore an exception not matching ignore filters" do
-    notice = build_notice(:error_class       => 'ArgumentError',
-                          :ignore            => ['Argument'],
-                          :ignore_by_filters => [lambda { |notice| false }])
-    assert !notice.ignore?
-  end
-
-  should "ignore an exception with a matching error class" do
-    notice = build_notice(:error_class => 'ArgumentError',
-                          :ignore      => [ArgumentError])
-    assert notice.ignore?
-  end
-
-  should "ignore an exception with a matching error class name" do
-    notice = build_notice(:error_class => 'ArgumentError',
-                          :ignore      => ['ArgumentError'])
-    assert notice.ignore?
-  end
-
-  should "ignore an exception with a matching filter" do
-    filter = lambda {|notice| notice.error_class == 'ArgumentError' }
-    notice = build_notice(:error_class       => 'ArgumentError',
-                          :ignore_by_filters => [filter])
-    assert notice.ignore?
-  end
-
-  should "not raise without an ignore list" do
-    notice = build_notice(:ignore => nil, :ignore_by_filters => nil)
-    assert_nothing_raised do
-      notice.ignore?
-    end
-  end
-
-  ignored_error_classes = HydraulicBrake::Configuration::IGNORE_DEFAULT
-
-  ignored_error_classes.each do |ignored_error_class|
-    should "ignore #{ignored_error_class} error by default" do
-      notice = build_notice(:error_class => ignored_error_class)
-      assert notice.ignore?
-    end
-  end
-
   should "act like a hash" do
     notice = build_notice(:error_message => 'some message')
     assert_equal notice.error_message, notice[:error_message]
@@ -425,61 +314,6 @@ class NoticeTest < Test::Unit::TestCase
     assert_nothing_raised do
       build_notice(:session => { :object => stub(:to_ary => {}) })
     end
-  end
-
-  should "extract data from a rack environment hash" do
-    url = "https://subdomain.happylane.com:100/test/file.rb?var=value&var2=value2"
-    parameters = { 'var' => 'value', 'var2' => 'value2' }
-    env = Rack::MockRequest.env_for(url)
-
-    notice = build_notice(:rack_env => env)
-
-    assert_equal url, notice.url
-    assert_equal parameters, notice.parameters
-    assert_equal 'GET', notice.cgi_data['REQUEST_METHOD']
-  end
-
-  should "show a nice warning when rack environment exceeds rack keyspace" do
-    # simulate exception for too big query
-    Rack::Request.any_instance.expects(:params).raises(RangeError.new("exceeded available parameter key space"))
-
-    url = "https://subdomain.happylane.com:100/test/file.rb?var=x"
-    env = Rack::MockRequest.env_for(url)
-
-    notice = build_notice(:rack_env => env)
-
-    assert_equal url, notice.url
-    assert_equal({:message => "failed to call params on Rack::Request -- exceeded available parameter key space"}, notice.parameters)
-    assert_equal 'GET', notice.cgi_data['REQUEST_METHOD']
-  end
-
-  should "extract data from a rack environment hash with action_dispatch info" do
-    params = { 'controller' => 'users', 'action' => 'index', 'id' => '7' }
-    env = Rack::MockRequest.env_for('/', { 'action_dispatch.request.parameters' => params })
-
-    notice = build_notice(:rack_env => env)
-
-    assert_equal params, notice.parameters
-    assert_equal params['controller'], notice.component
-    assert_equal params['action'], notice.action
-  end
-
-  should "extract session data from a rack environment" do
-    session_data = { 'something' => 'some value' }
-    env = Rack::MockRequest.env_for('/', 'rack.session' => session_data)
-
-    notice = build_notice(:rack_env => env)
-
-    assert_equal session_data, notice.session_data
-  end
-
-  should "prefer passed session data to rack session data" do
-    session_data = { 'something' => 'some value' }
-    env = Rack::MockRequest.env_for('/')
-
-    notice = build_notice(:rack_env => env, :session_data => session_data)
-
-    assert_equal session_data, notice.session_data
   end
 
   should "prefer passed error_message to exception message" do
