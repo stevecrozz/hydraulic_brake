@@ -1,18 +1,32 @@
 HydraulicBrake
 ========
 
-This is a replacement notifier gem for integrating apps with [Airbrake](http://airbrake.io).
-
-The [Airbrake gem](https://github.com/airbrake/airbrake) is too
-heavyweight and brings in unnecessary dependencies like activesupport.
-It also automatically installs Rack middlware and automatically includes
-itself into ActiveRecord::Base. HydraulicBrake doesn't do anything
-automatically and has only a few dependencies.
-
-When an uncaught exception occurs, HydraulicBrake will POST the relevant
-data to the Airbrake server specified in your environment.
+This is a replacement notifier gem for the [Airbrake
+gem](https://github.com/airbrake/airbrake) which is used
+for integrating ruby apps with [Airbrake](http://airbrake.io).
 
 ### Transitioning from Airbrake to HydraulicBrake
+
+HydraulicBrake is a lighter weight alternative to the [Airbrake
+gem](https://github.com/airbrake/airbrake) and takes a different design
+approach. HydraulicBrake doesn't attempt to integrate with any
+frameworks and has few dependencies. HydraulicBrake doesn't change
+anything outside its own namespace. It doesn't do any automatic
+exception handling or configuration.
+
+Configuration
+-------------
+
+Configure HydraulicBrake when your app starts with a configuration block
+like this one:
+
+    HydraulicBrake.configure do |config|
+      config.host = "api.airbrake.io"
+      config.port = "443"
+      config.secure = true
+      config.environment_name = "staging"
+      config.api_key = "<api-key-from-your-airbrake-server>"
+    end
 
 Usage
 -----
@@ -44,38 +58,6 @@ HydraulicBrake merges the hash you pass with these default options:
     }
 
 You can override any of those parameters.
-
-### Sending shell environment variables when "Going beyond exceptions"
-
-One common request we see is to send shell environment variables along with
-manual exception notification.  We recommend sending them along with CGI data
-or session data (:cgi_data or :session_data keys, respectively.)
-
-See HydraulicBrake::Notice#initialize in lib/hydraulic_brake/notice.rb for
-more details.
-
-Tracking deployments in HydraulicBrake
---------------------------------
-
-You can use the following rake task from your deployment process to
-notify Airbrake of deployments:
-
-    rake hydraulicbrake:deploy TO=#{env} REVISION=#{current_revision} REPO=#{repository} USER=#{local_user}
-
-Testing
--------
-
-When you run your tests, you might notice that the Airbrake service is
-recording notices generated using #notify when you don't expect it to.
-You can use code like this in your test_helper.rb or spec_helper.rb
-files to redefine that method so those errors are not reported while
-running tests.
-
-    module Airbrake
-      def self.notify(exception, opts = {})
-        # do nothing.
-      end
-    end
 
 Proxy Support
 -------------
