@@ -2,26 +2,26 @@ require 'net/http'
 require 'uri'
 
 # Capistrano tasks for notifying Airbrake of deploys
-module AirbrakeTasks
+module HydraulicBrakeTasks
 
   # Alerts Airbrake of a deploy.
   #
   # @param [Hash] opts Data about the deploy that is set to Airbrake
   #
   # @option opts [String] :api_key Api key of you Airbrake application
-  # @option opts [String] :rails_env Environment of the deploy (production, staging)
+  # @option opts [String] :env Environment of the deploy (production, staging)
   # @option opts [String] :scm_revision The given revision/sha that is being deployed
   # @option opts [String] :scm_repository Address of your repository to help with code lookups
   # @option opts [String] :local_username Who is deploying
   def self.deploy(opts = {})
-    api_key = opts.delete(:api_key) || Airbrake.configuration.api_key
-    if api_key.blank?
+    api_key = opts.delete(:api_key) || HydraulicBrake.configuration.api_key
+    if api_key.empty?
       puts "I don't seem to be configured with an API key.  Please check your configuration."
       return false
     end
 
-    if opts[:rails_env].blank?
-      puts "I don't know to which Rails environment you are deploying (use the TO=production option)."
+    if opts[:env].empty?
+      puts "I don't know to which environment you are deploying (use the TO=production option)."
       return false
     end
 
@@ -29,21 +29,21 @@ module AirbrakeTasks
     params = {'api_key' => api_key}
     opts.each {|k,v| params["deploy[#{k}]"] = v }
 
-    host = Airbrake.configuration.host || 'api.airbrake.io'
-    port = Airbrake.configuration.port
+    host = HydraulicBrake.configuration.host
+    port = HydraulicBrake.configuration.port
 
-    proxy = Net::HTTP.Proxy(Airbrake.configuration.proxy_host,
-                            Airbrake.configuration.proxy_port,
-                            Airbrake.configuration.proxy_user,
-                            Airbrake.configuration.proxy_pass)
+    proxy = Net::HTTP.Proxy(HydraulicBrake.configuration.proxy_host,
+                            HydraulicBrake.configuration.proxy_port,
+                            HydraulicBrake.configuration.proxy_user,
+                            HydraulicBrake.configuration.proxy_pass)
     http = proxy.new(host, port)
 
 
 
     # Handle Security
-    if Airbrake.configuration.secure?
+    if HydraulicBrake.configuration.secure?
       http.use_ssl      = true
-      http.ca_file      = Airbrake.configuration.ca_bundle_path
+      http.ca_file      = HydraulicBrake.configuration.ca_bundle_path
       http.verify_mode  = OpenSSL::SSL::VERIFY_PEER
     end
 

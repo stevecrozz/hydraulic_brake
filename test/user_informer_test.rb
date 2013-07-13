@@ -6,7 +6,7 @@ class UserInformerTest < Test::Unit::TestCase
       env['airbrake.error_id'] = 1
       [200, {}, ["<!-- AIRBRAKE ERROR -->"]]
     end
-    informer_app = Airbrake::UserInformer.new(main_app)
+    informer_app = HydraulicBrake::UserInformer.new(main_app)
 
     ShamRack.mount(informer_app, "example.com")
 
@@ -19,7 +19,7 @@ class UserInformerTest < Test::Unit::TestCase
     main_app = lambda do |env|
       [200, {}, ["<!-- AIRBRAKE ERROR -->"]]
     end
-    informer_app = Airbrake::UserInformer.new(main_app)
+    informer_app = HydraulicBrake::UserInformer.new(main_app)
 
     ShamRack.mount(informer_app, "example.com")
 

@@ -1,4 +1,4 @@
-module Airbrake
+module HydraulicBrake
   # Front end to parsing the backtrace for each notice
   class Backtrace
 

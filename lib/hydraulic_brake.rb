@@ -2,20 +2,16 @@ require "girl_friday"
 require 'net/http'
 require 'net/https'
 require 'rubygems'
-require 'airbrake/utils/blank'
-require 'airbrake/version'
-require 'airbrake/configuration'
-require 'airbrake/notice'
-require 'airbrake/sender'
-require 'airbrake/backtrace'
-require 'airbrake/rack'
-require 'airbrake/user_informer'
+require 'hydraulic_brake/version'
+require 'hydraulic_brake/configuration'
+require 'hydraulic_brake/notice'
+require 'hydraulic_brake/sender'
+require 'hydraulic_brake/backtrace'
+require 'hydraulic_brake/user_informer'
 
-require 'airbrake/railtie' if defined?(Rails::Railtie)
-
-module Airbrake
+module HydraulicBrake
   API_VERSION = "2.3"
-  LOG_PREFIX = "** [Airbrake] "
+  LOG_PREFIX = "** [HydraulicBrake] "
 
   HEADERS = {
     'Content-type'             => 'text/xml',
@@ -23,12 +19,14 @@ module Airbrake
   }
 
   class << self
-    # The sender object is responsible for delivering formatted data to the Airbrake server.
-    # Must respond to #send_to_airbrake. See Airbrake::Sender.
+    # The sender object is responsible for delivering formatted data to the
+    # Airbrake server.  Must respond to #send_to_airbrake. See
+    # HydraulicBrake::Sender.
     attr_accessor :sender
 
-    # A Airbrake configuration object. Must act like a hash and return sensible
-    # values for all Airbrake configuration options. See Airbrake::Configuration.
+    # A HydraulicBrake configuration object. Must act like a hash and return
+    # sensible values for all HydraulicBrake configuration options. See
+    # HydraulicBrake::Configuration.
     attr_writer :configuration
 
     # Tell the log that the Notifier is good to go
@@ -71,7 +69,7 @@ module Airbrake
     # Call this method to modify defaults in your initializers.
     #
     # @example
-    #   Airbrake.configure do |config|
+    #   HydraulicBrake.configure do |config|
     #     config.api_key = '1234567890abcdef'
     #     config.secure  = false
     #   end
@@ -83,31 +81,29 @@ module Airbrake
     end
 
     # The configuration object.
-    # @see Airbrake.configure
+    # @see HydraulicBrake.configure
     def configuration
       @configuration ||= Configuration.new
     end
 
-    # Sends an exception manually using this method, even when you are not in a controller.
+    # Sends an exception manually using this method, even when you are not in a
+    # controller.
     #
-    # @param [Exception] exception The exception you want to notify Airbrake about.
-    # @param [Hash] opts Data that will be sent to Airbrake.
+    # @param [Exception] exception The exception you want to notify Airbrake
+    #   about
+    # @param [Hash] opts Data that will be sent to Airbrake
     #
-    # @option opts [String] :api_key The API key for this project. The API key is a unique identifier that Airbrake uses for identification.
-    # @option opts [String] :error_message The error returned by the exception (or the message you want to log).
-    # @option opts [String] :backtrace A backtrace, usually obtained with +caller+.
-    # @option opts [String] :rack_env The Rack environment.
-    # @option opts [String] :session The contents of the user's session.
-    # @option opts [String] :environment_name The application environment name.
+    # @option opts [String] :api_key The API key for this project. The API key
+    #   is a unique identifier that Airbrake uses for identification
+    # @option opts [String] :error_message The error returned by the exception
+    #   (or the message you want to log)
+    # @option opts [String] :backtrace A backtrace, usually obtained with
+    #   +caller+
+    # @option opts [String] :rack_env The Rack environment
+    # @option opts [String] :session The contents of the user's session
+    # @option opts [String] :environment_name The application environment name
     def notify(exception, opts = {})
       send_notice(build_notice_for(exception, opts))
-    end
-
-    # Sends the notice unless it is one of the default ignored exceptions
-    # @see Airbrake.notify
-    def notify_or_ignore(exception, opts = {})
-      notice = build_notice_for(exception, opts)
-      send_notice(notice) unless notice.ignore?
     end
 
     def build_lookup_hash_for(exception, options = {})

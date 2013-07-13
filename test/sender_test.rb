@@ -7,7 +7,7 @@ class SenderTest < Test::Unit::TestCase
   end
 
   def build_sender(opts = {})
-    Airbrake.configure do |conf|
+    HydraulicBrake.configure do |conf|
       opts.each {|opt, value| conf.send(:"#{opt}=", value) }
     end
   end
@@ -32,7 +32,7 @@ class SenderTest < Test::Unit::TestCase
   end
 
   should "post to Airbrake with XML passed" do
-    xml_notice = Airbrake::Notice.new(:error_class => "FooBar", :error_message => "Foo Bar").to_xml
+    xml_notice = HydraulicBrake::Notice.new(:error_class => "FooBar", :error_message => "Foo Bar").to_xml
 
     http = stub_http
 
@@ -40,12 +40,12 @@ class SenderTest < Test::Unit::TestCase
     sender.send_to_airbrake(xml_notice)
 
     assert_received(http, :post) do |expect|
-      expect.with(anything, xml_notice, Airbrake::HEADERS)
+      expect.with(anything, xml_notice, HydraulicBrake::HEADERS)
     end
   end
 
   should "post to Airbrake with a Notice instance passed" do
-    notice = Airbrake::Notice.new(:error_class => "FooBar", :error_message => "Foo Bar")
+    notice = HydraulicBrake::Notice.new(:error_class => "FooBar", :error_message => "Foo Bar")
 
     http = stub_http
 
@@ -53,7 +53,7 @@ class SenderTest < Test::Unit::TestCase
     sender.send_to_airbrake(notice)
 
     assert_received(http, :post) do |expect|
-      expect.with(anything, notice.to_xml, Airbrake::HEADERS)
+      expect.with(anything, notice.to_xml, HydraulicBrake::HEADERS)
     end
   end
 
@@ -66,7 +66,7 @@ class SenderTest < Test::Unit::TestCase
     proxy    = stub(:new => http)
     Net::HTTP.stubs(:Proxy => proxy)
 
-    url = "http://api.airbrake.io:80#{Airbrake::Sender::NOTICES_URI}"
+    url = "http://api.airbrake.io:80#{HydraulicBrake::Sender::NOTICES_URI}"
     uri = URI.parse(url)
 
     proxy_host = 'some.host'
@@ -79,7 +79,7 @@ class SenderTest < Test::Unit::TestCase
                    :proxy_user => proxy_user,
                    :proxy_pass => proxy_pass)
     assert_received(http, :post) do |expect|
-      expect.with(uri.path, anything, Airbrake::HEADERS)
+      expect.with(uri.path, anything, HydraulicBrake::HEADERS)
     end
     assert_received(Net::HTTP, :Proxy) do |expect|
       expect.with(proxy_host, proxy_port, proxy_user, proxy_pass)
@@ -161,7 +161,7 @@ class SenderTest < Test::Unit::TestCase
 
     should "not fail when posting any http exception occurs" do
       http = stub_http
-      Airbrake::Sender::HTTP_ERRORS.each do |error|
+      HydraulicBrake::Sender::HTTP_ERRORS.each do |error|
         http.stubs(:post).raises(error)
         assert_nothing_thrown do
           send_exception(:secure => false)
@@ -173,20 +173,20 @@ class SenderTest < Test::Unit::TestCase
   context "SSL" do
     should "post to the right url for non-ssl" do
       http = stub_http
-      url = "http://api.airbrake.io:80#{Airbrake::Sender::NOTICES_URI}"
+      url = "http://api.airbrake.io:80#{HydraulicBrake::Sender::NOTICES_URI}"
       uri = URI.parse(url)
       send_exception(:secure => false)
-      assert_received(http, :post) {|expect| expect.with(uri.path, anything, Airbrake::HEADERS) }
+      assert_received(http, :post) {|expect| expect.with(uri.path, anything, HydraulicBrake::HEADERS) }
     end
 
     should "post to the right path for ssl" do
       http = stub_http
       send_exception(:secure => true)
-      assert_received(http, :post) {|expect| expect.with(Airbrake::Sender::NOTICES_URI, anything, Airbrake::HEADERS) }
+      assert_received(http, :post) {|expect| expect.with(HydraulicBrake::Sender::NOTICES_URI, anything, HydraulicBrake::HEADERS) }
     end
 
     should "verify the SSL peer when the use_ssl option is set to true" do
-      url = "https://api.airbrake.io#{Airbrake::Sender::NOTICES_URI}"
+      url = "https://api.airbrake.io#{HydraulicBrake::Sender::NOTICES_URI}"
       uri = URI.parse(url)
 
       real_http = Net::HTTP.new(uri.host, uri.port)
@@ -198,13 +198,13 @@ class SenderTest < Test::Unit::TestCase
       send_exception(:secure => true)
       assert(real_http.use_ssl?)
       assert_equal(OpenSSL::SSL::VERIFY_PEER,        real_http.verify_mode)
-      assert_equal(Airbrake.configuration.local_cert_path, real_http.ca_file)
+      assert_equal(HydraulicBrake.configuration.local_cert_path, real_http.ca_file)
     end
 
     should "use the default DEFAULT_CERT_FILE if asked to" do
-      config = Airbrake::Configuration.new
+      config = HydraulicBrake::Configuration.new
       config.use_system_ssl_cert_chain = true
-      sender = Airbrake::Sender.new(config)
+      sender = HydraulicBrake::Sender.new(config)
 
       assert(sender.use_system_ssl_cert_chain?)
 
@@ -222,13 +222,13 @@ class SenderTest < Test::Unit::TestCase
       sender  = build_sender(:secure => true)
       http    = sender.send(:setup_http_connection)
 
-      assert_equal(Airbrake.configuration.local_cert_path, http.ca_file)
+      assert_equal(HydraulicBrake.configuration.local_cert_path, http.ca_file)
 
       File.stubs(:exist?).with(OpenSSL::X509::DEFAULT_CERT_FILE).returns(true)
       sender  = build_sender(:secure => true, :use_system_ssl_cert_chain => true)
       http    = sender.send(:setup_http_connection)
 
-      assert_not_equal(Airbrake.configuration.local_cert_path, http.ca_file)
+      assert_not_equal(HydraulicBrake.configuration.local_cert_path, http.ca_file)
       assert_equal(OpenSSL::X509::DEFAULT_CERT_FILE, http.ca_file)
     end
 

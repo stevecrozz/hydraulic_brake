@@ -2,56 +2,56 @@
 #
 require 'rake'
 require 'rubygems'
-require 'airbrake'
-require 'airbrake/rake_handler'
+require 'hydraulic_brake'
+require 'hydraulic_brake/rake_handler'
 
-Airbrake.configure do |c|
+HydraulicBrake.configure do |c|
 end
 
 # Should catch exception
-task :airbrake do
-  Airbrake.configuration.rescue_rake_exceptions = true
+task :hydraulic_brake do
+  HydraulicBrake.configuration.rescue_rake_exceptions = true
   stub_tty_output(true)
   raise_exception 
 end
 
 # Should not catch exception
-task :airbrake_disabled do
-  Airbrake.configuration.rescue_rake_exceptions = false
+task :hydraulic_brake_disabled do
+  HydraulicBrake.configuration.rescue_rake_exceptions = false
   stub_tty_output(true)
   raise_exception 
 end
 
 # Should not catch exception as tty_output is true
-task :airbrake_autodetect_from_terminal do
-  Airbrake.configuration.rescue_rake_exceptions = nil
+task :hydraulic_brake_autodetect_from_terminal do
+  HydraulicBrake.configuration.rescue_rake_exceptions = nil
   stub_tty_output(true) 
   raise_exception 
 end
 
 # Should catch exception as tty_output is false
-task :airbrake_autodetect_not_from_terminal do
-  Airbrake.configuration.rescue_rake_exceptions = nil
+task :hydraulic_brake_autodetect_not_from_terminal do
+  HydraulicBrake.configuration.rescue_rake_exceptions = nil
   stub_tty_output(false) 
   raise_exception 
 end
 
-task :airbrake_not_yet_configured do
-  Airbrake.configuration.rescue_rake_exceptions = true
+task :hydraulic_brake_not_yet_configured do
+  HydraulicBrake.configuration.rescue_rake_exceptions = true
   stub_tty_output(true)
   stub_empty_sender
   raise_exception
 end
 
-module Airbrake
+module HydraulicBrake
   def self.notify_or_ignore(*args)
     # TODO if you need to check more params, you'll have to use json.dump or something
-    $stderr.puts "airbrake #{args[1][:component]}"
+    $stderr.puts "hydraulic_brake #{args[1][:component]}"
   end
 end
 
 def stub_empty_sender
-  Airbrake.sender = nil
+  HydraulicBrake.sender = nil
 end
 
 def stub_tty_output(value)

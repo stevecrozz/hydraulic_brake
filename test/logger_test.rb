@@ -11,15 +11,15 @@ class LoggerTest < Test::Unit::TestCase
   end
 
   def send_notice
-    Airbrake.sender.send_to_airbrake({'foo' => "bar"})
+    HydraulicBrake.sender.send_to_airbrake({'foo' => "bar"})
   end
 
   def stub_verbose_log
-    Airbrake.stubs(:write_verbose_log)
+    HydraulicBrake.stubs(:write_verbose_log)
   end
 
   def configure
-    Airbrake.configure { |config| }
+    HydraulicBrake.configure { |config| }
   end
 
   should "report that notifier is ready when configured" do
@@ -30,7 +30,7 @@ class LoggerTest < Test::Unit::TestCase
 
   should "not report that notifier is ready when internally configured" do
     stub_verbose_log
-    Airbrake.configure(true) { |config| }
+    HydraulicBrake.configure(true) { |config| }
     assert_not_logged /.*/
   end
 
