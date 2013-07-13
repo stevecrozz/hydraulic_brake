@@ -122,19 +122,6 @@ class NotifierTest < Test::Unit::TestCase
     sender = stub_sender!
 
     HydraulicBrake.notify(build_exception)
-    HydraulicBrake.notify_or_ignore(build_exception)
-
-    assert_received(sender, :send_to_airbrake) {|expect| expect.never }
-  end
-
-  should "not deliver an ignored exception when notifying implicitly" do
-    set_public_env
-    exception = build_exception
-    sender = stub_sender!
-    notice = stub_notice!
-    notice.stubs(:ignore? => true)
-
-    HydraulicBrake.notify_or_ignore(exception)
 
     assert_received(sender, :send_to_airbrake) {|expect| expect.never }
   end
@@ -168,18 +155,6 @@ class NotifierTest < Test::Unit::TestCase
     HydraulicBrake.notify(exception)
 
     assert_equal received_notice, notice
-  end
-
-  should "deliver an ignored exception when notifying manually" do
-    set_public_env
-    exception = build_exception
-    sender = stub_sender!
-    notice = stub_notice!
-    notice.stubs(:ignore? => true)
-
-    HydraulicBrake.notify(exception)
-
-    assert_sent(notice, :exception => exception)
   end
 
   should "pass config to created notices" do

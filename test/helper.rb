@@ -15,9 +15,7 @@ require 'action_controller/test_process'
 require 'active_record'
 require 'active_support'
 require 'nokogiri'
-require 'rack'
 require 'bourne'
-require 'sham_rack'
 
 require "hydraulic_brake"
 
@@ -36,21 +34,8 @@ module TestMethods
     render :text => "Success"
   end
 
-  def do_raise_ignored
-    raise ActiveRecord::RecordNotFound.new("404")
-  end
-
-  def do_raise_not_ignored
-    raise ActiveRecord::StatementInvalid.new("Statement invalid")
-  end
-
   def manual_notify
     notify_airbrake(Exception.new)
-    render :text => "Success"
-  end
-
-  def manual_notify_ignored
-    notify_airbrake(ActiveRecord::RecordNotFound.new("404"))
     render :text => "Success"
   end
 end
@@ -75,7 +60,7 @@ class Test::Unit::TestCase
   # Borrowed from ActiveSupport 2.3.2
   def assert_difference(expression, difference = 1, message = nil, &block)
     b = block.send(:binding)
-    exps = Array.wrap(expression)
+    exps = AsArray.wrap(expression)
     before = exps.map { |e| eval(e, b) }
 
     yield
@@ -100,7 +85,7 @@ class Test::Unit::TestCase
   end
 
   def stub_notice
-    stub('notice', :to_xml => 'some yaml', :ignore? => false)
+    stub('notice', :to_xml => 'some yaml')
   end
 
   def stub_notice!
@@ -209,7 +194,7 @@ module DefinesConstants
 end
 
 # Also stolen from AS 2.3.2
-class Array
+class AsArray
   # Wraps the object in an Array unless it's an Array.  Converts the
   # object to an Array using #to_ary if it implements that.
   def self.wrap(object)

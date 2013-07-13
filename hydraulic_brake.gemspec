@@ -24,12 +24,11 @@ Gem::Specification.new do |s|
   s.add_development_dependency("fakeweb",       "~> 1.3.0")
   s.add_development_dependency("nokogiri",    "~> 1.4.3.1")
   s.add_development_dependency("rspec",         "~> 2.6.0")
-  s.add_development_dependency("sham_rack",     "~> 1.3.0")
   s.add_development_dependency("shoulda",      "~> 2.11.3")
-  s.add_development_dependency("capistrano",    "~> 2.8.0")
   s.add_development_dependency("guard"                    )
   s.add_development_dependency("guard-test"               )
   s.add_development_dependency("simplecov"                )
+  s.add_development_dependency("rake")
 
   s.authors = ["Stephen Crosby"]
   s.email   = %q{stevecrozz@gmail.com}

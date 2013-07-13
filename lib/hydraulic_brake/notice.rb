@@ -57,17 +57,14 @@ module HydraulicBrake
     # The action (if any) that was called in this request
     attr_reader :action
 
+    # A hash of session data from the request
+    attr_reader :session_data
+
     # The path to the project that caused the error (usually Rails.root)
     attr_reader :project_root
 
     # The URL at which the error occurred (if any)
     attr_reader :url
-
-    # See Configuration#ignore
-    attr_reader :ignore
-
-    # See Configuration#ignore_by_filters
-    attr_reader :ignore_by_filters
 
     # The name of the notifier library sending this notice, such as "HydraulicBrake Notifier"
     attr_reader :notifier_name
@@ -88,10 +85,9 @@ module HydraulicBrake
 
     # Private writers for all the attributes
     attr_writer :exception, :api_key, :backtrace, :error_class, :error_message,
-      :backtrace_filters, :parameters, :params_filters,
-      :project_root, :url, :ignore,
-      :ignore_by_filters, :notifier_name, :notifier_url, :notifier_version,
-      :component, :action, :cgi_data, :environment_name, :hostname, :user
+      :backtrace_filters, :parameters, :params_filters, :project_root, :url,
+      :notifier_name, :notifier_url, :notifier_version, :component, :action,
+      :cgi_data, :environment_name, :hostname, :user, :session_data
 
     # Arguments given in the initializer
     attr_accessor :args
@@ -103,37 +99,31 @@ module HydraulicBrake
       self.exception    = args[:exception]
       self.api_key      = args[:api_key]
       self.project_root = args[:project_root]
-      self.url          = args[:url] || rack_env(:url)
+      self.url          = args[:url]
 
       self.notifier_name    = args[:notifier_name]
       self.notifier_version = args[:notifier_version]
       self.notifier_url     = args[:notifier_url]
 
-      self.ignore              = args[:ignore]              || []
-      self.ignore_by_filters   = args[:ignore_by_filters]   || []
       self.backtrace_filters   = args[:backtrace_filters]   || []
       self.params_filters      = args[:params_filters]      || []
-      self.parameters          = args[:parameters] ||
-                                   action_dispatch_params ||
-                                   rack_env(:params) ||
-                                   {}
-      self.component           = args[:component] || args[:controller] || parameters['controller']
-      self.action              = args[:action] || parameters['action']
+      self.parameters          = args[:parameters] || {}
+      self.component           = args[:component] || args[:controller] || nil
+      self.action              = args[:action] || nil
 
       self.environment_name = args[:environment_name]
-      self.cgi_data         = args[:cgi_data] || args[:rack_env] || {}
+      self.cgi_data         = args[:cgi_data] || {}
       self.backtrace        = Backtrace.parse(exception_attribute(:backtrace, caller), :filters => self.backtrace_filters)
       self.error_class      = exception_attribute(:error_class) {|exception| exception.class.name }
       self.error_message    = exception_attribute(:error_message, 'Notification') do |exception|
         "#{exception.class.name}: #{args[:error_message] || exception.message}"
       end
+      self.session_data = args[:session_data] || {}
 
       self.hostname        = local_hostname
       self.user = args[:user] || {}
 
-      also_use_rack_params_filters
       clean_params
-      clean_rack_request_data
     end
 
     # Converts the given notice to XML
@@ -158,11 +148,8 @@ module HydraulicBrake
             end
           end
         end
-        if url ||
-            controller ||
-            action ||
-            !parameters.empty? ||
-            !cgi_data.empty?
+
+        if request_present?
           notice.request do |request|
             request.url(url)
             request.component(controller)
@@ -172,6 +159,11 @@ module HydraulicBrake
                 xml_vars_for(params, parameters)
               end
             end
+            unless session_data.empty?
+              request.session do |session|
+                xml_vars_for(session, session_data)
+              end
+            end
             unless cgi_data.nil? || cgi_data.empty?
               request.tag!("cgi-data") do |cgi_datum|
                 xml_vars_for(cgi_datum, cgi_data)
@@ -179,6 +171,7 @@ module HydraulicBrake
             end
           end
         end
+
         notice.tag!("server-environment") do |env|
           env.tag!("project-root", project_root)
           env.tag!("environment-name", environment_name)
@@ -194,12 +187,6 @@ module HydraulicBrake
         end
       end
       xml.to_s
-    end
-
-    # Determines if this notice should be ignored
-    def ignore?
-      ignored_class_names.include?(error_class) ||
-        ignore_by_filters.any? {|filter| filter.call(self) }
     end
 
     # Allows properties to be accessed using a hash-like syntax
@@ -219,6 +206,14 @@ module HydraulicBrake
 
     private
 
+    def request_present?
+      url ||
+        controller ||
+        action ||
+        !parameters.empty? ||
+        !cgi_data.empty? ||
+        !session_data.empty?
+    end
 
     # Gets a property named +attribute+ of an exception, either from an actual
     # exception or a hash.
@@ -283,12 +278,6 @@ module HydraulicBrake
       end
     end
 
-    def clean_rack_request_data
-      if cgi_data
-        cgi_data.delete("rack.request.form_vars")
-      end
-    end
-
     def filter(hash)
       if params_filters
         hash.each do |key, value|
@@ -307,18 +296,6 @@ module HydraulicBrake
       end
     end
 
-    # Converts the mixed class instances and class names into just names
-    # TODO: move this into Configuration or another class
-    def ignored_class_names
-      ignore.collect do |string_or_class|
-        if string_or_class.respond_to?(:name)
-          string_or_class.name
-        else
-          string_or_class
-        end
-      end
-    end
-
     def xml_vars_for(builder, hash)
       hash.each do |key, value|
         if value.respond_to?(:to_hash)
@@ -326,33 +303,6 @@ module HydraulicBrake
         else
           builder.var(value.to_s, :key => key)
         end
-      end
-    end
-
-    def rack_env(method)
-      rack_request.send(method) if rack_request
-    rescue
-      {:message => "failed to call #{method} on Rack::Request -- #{$!.message}"}
-    end
-
-    def rack_request
-      @rack_request ||= if args[:rack_env]
-        ::Rack::Request.new(args[:rack_env])
-      end
-    end
-
-    def action_dispatch_params
-      args[:rack_env]['action_dispatch.request.parameters'] if args[:rack_env]
-    end
-
-    def rack_session
-      args[:rack_env]['rack.session'] if args[:rack_env]
-    end
-
-    def also_use_rack_params_filters
-      if args[:rack_env]
-        @params_filters ||= []
-        @params_filters += rack_request.env["action_dispatch.parameter_filter"] || []
       end
     end
 

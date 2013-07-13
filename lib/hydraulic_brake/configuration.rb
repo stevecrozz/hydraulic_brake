@@ -2,13 +2,32 @@ module HydraulicBrake
   # Used to set up and modify settings for the notifier.
   class Configuration
 
-    OPTIONS = [:api_key, :backtrace_filters, :development_environments,
-        :development_lookup, :environment_name, :host,
-        :http_open_timeout, :http_read_timeout, :ignore, :ignore_by_filters,
-        :ignore_user_agent, :notifier_name, :notifier_url, :notifier_version,
-        :params_filters, :project_root, :port, :protocol, :proxy_host,
-        :proxy_pass, :proxy_port, :proxy_user, :secure, :use_system_ssl_cert_chain,
-        :framework, :user_information, :rescue_rake_exceptions, :rake_environment_filters].freeze
+    OPTIONS = [
+      :api_key,
+      :backtrace_filters,
+      :development_environments,
+      :development_lookup,
+      :environment_name,
+      :framework,
+      :host,
+      :http_open_timeout,
+      :http_read_timeout,
+      :notifier_name,
+      :notifier_url,
+      :notifier_version,
+      :params_filters,
+      :port,
+      :project_root,
+      :protocol,
+      :proxy_host,
+      :proxy_pass,
+      :proxy_port,
+      :proxy_user,
+      :rake_environment_filters,
+      :rescue_rake_exceptions,
+      :secure,
+      :use_system_ssl_cert_chain,
+    ].freeze
 
     # The API key for your project, found on the project edit form.
     attr_accessor :api_key
@@ -53,18 +72,9 @@ module HydraulicBrake
     # A list of filters for cleaning and pruning the backtrace. See #filter_backtrace.
     attr_reader :backtrace_filters
 
-    # A list of filters for ignoring exceptions. See #ignore_by_filter.
-    attr_reader :ignore_by_filters
-
     # A list of environment keys that will be ignored from what is sent to Airbrake server
     # Empty by default and used only in rake handler
     attr_reader :rake_environment_filters
-
-    # A list of exception classes to ignore. The array can be appended to.
-    attr_reader :ignore
-
-    # A list of user agents that are being ignored. The array can be appended to.
-    attr_reader :ignore_user_agent
 
     # A list of environments in which notifications should not be sent.
     attr_accessor :development_environments
@@ -90,9 +100,6 @@ module HydraulicBrake
 
     # The logger used by HydraulicBrake
     attr_accessor :logger
-
-    # The text that the placeholder is replaced with. {{error_id}} is the actual error number.
-    attr_accessor :user_information
 
     # The framework HydraulicBrake is configured to use
     attr_accessor :framework
@@ -128,35 +135,23 @@ module HydraulicBrake
       lambda { |line| line if line !~ %r{lib/hydraulic_brake} }
     ].freeze
 
-    IGNORE_DEFAULT = ['ActiveRecord::RecordNotFound',
-                      'ActionController::RoutingError',
-                      'ActionController::InvalidAuthenticityToken',
-                      'CGI::Session::CookieStore::TamperedWithCookie',
-                      'ActionController::UnknownAction',
-                      'AbstractController::ActionNotFound',
-                      'Mongoid::Errors::DocumentNotFound']
-
     alias_method :secure?, :secure
     alias_method :use_system_ssl_cert_chain?, :use_system_ssl_cert_chain
 
     def initialize
       @secure                   = false
       @use_system_ssl_cert_chain= false
-      @host                     = ''
+      @host                     = 'api.airbrake.io'
       @http_open_timeout        = 2
       @http_read_timeout        = 5
       @params_filters           = DEFAULT_PARAMS_FILTERS.dup
       @backtrace_filters        = DEFAULT_BACKTRACE_FILTERS.dup
-      @ignore_by_filters        = []
-      @ignore                   = IGNORE_DEFAULT.dup
-      @ignore_user_agent        = []
       @development_environments = %w(development test cucumber)
       @development_lookup       = true
       @notifier_name            = 'HydraulicBrake Notifier'
       @notifier_version         = VERSION
       @notifier_url             = 'https://github.com/stevecrozz/hydraulic_brake'
       @framework                = 'Standalone'
-      @user_information         = 'HydraulicBrake Error {{error_id}}'
       @rescue_rake_exceptions   = nil
       @user_attributes          = DEFAULT_USER_ATTRIBUTES.dup
       @rake_environment_filters = []
@@ -175,34 +170,6 @@ module HydraulicBrake
     # @yieldparam [String] line A line in the backtrace.
     def filter_backtrace(&block)
       self.backtrace_filters << block
-    end
-
-    # Takes a block and adds it to the list of ignore filters.
-    # When the filters run, the block will be handed the exception.
-    # @example
-    #   config.ignore_by_filter do |exception_data|
-    #     true if exception_data[:error_class] == "RuntimeError"
-    #   end
-    #
-    # @param [Proc] block The new ignore filter
-    # @yieldparam [Hash] data The exception data given to +HydraulicBrake.notify+
-    # @yieldreturn [Boolean] If the block returns true the exception will be ignored, otherwise it will be processed by hydraulic_brake.
-    def ignore_by_filter(&block)
-      self.ignore_by_filters << block
-    end
-
-    # Overrides the list of default ignored errors.
-    #
-    # @param [Array<Exception>] names A list of exceptions to ignore.
-    def ignore_only=(names)
-      @ignore = [names].flatten
-    end
-
-    # Overrides the list of default ignored user agents
-    #
-    # @param [Array<String>] A list of user agents to ignore
-    def ignore_user_agent_only=(names)
-      @ignore_user_agent = [names].flatten
     end
 
     # Allows config options to be read like a hash
