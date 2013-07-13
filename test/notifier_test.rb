@@ -126,43 +126,12 @@ class NotifierTest < Test::Unit::TestCase
     assert_received(sender, :send_to_airbrake) {|expect| expect.never }
   end
 
-  should "deliver exception in async-mode" do
-    HydraulicBrake.configure do |config|
-      config.environment_name = 'production'
-      config.async do |notice|
-        HydraulicBrake.sender.send_to_airbrake(notice)
-      end
-    end
-    exception = build_exception
-    sender = stub_sender!
-    notice = stub_notice!
-
-    HydraulicBrake.notify(exception)
-
-    assert_sent(notice, :exception => exception)
-  end
-
-  should "pass notice in async-mode" do
-    received_notice = nil
-    HydraulicBrake.configure do |config|
-      config.environment_name = 'production'
-      config.async {|notice| received_notice = notice}
-    end
-    exception = build_exception
-    sender = stub_sender!
-    notice = stub_notice!
-
-    HydraulicBrake.notify(exception)
-
-    assert_equal received_notice, notice
-  end
-
   should "pass config to created notices" do
     exception = build_exception
     config_opts = { 'one' => 'two', 'three' => 'four' }
-    notice = stub_notice!
+    stub_notice!
     stub_sender!
-    HydraulicBrake.configuration = stub('config', :merge => config_opts, :public? => true,:async? => nil)
+    HydraulicBrake.configuration = stub('config', :merge => config_opts, :public? => true)
 
     HydraulicBrake.notify(exception)
 
@@ -191,7 +160,7 @@ class NotifierTest < Test::Unit::TestCase
     end
 
     should "set file" do
-      assert_match /test\/helper\.rb$/, @hash[:file]
+      assert_match(/test\/helper\.rb$/, @hash[:file])
     end
 
     should "set env to production" do

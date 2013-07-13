@@ -1,4 +1,3 @@
-require "girl_friday"
 require 'net/http'
 require 'net/https'
 require 'rubygems'
@@ -125,11 +124,7 @@ module HydraulicBrake
 
     def send_notice(notice)
       if configuration.public?
-        if configuration.async?
-          configuration.async.call(notice)
-        else
-          sender.send_to_airbrake(notice)
-        end
+        sender.send_to_airbrake(notice)
       end
     end
 

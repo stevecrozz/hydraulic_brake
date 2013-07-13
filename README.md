@@ -59,6 +59,13 @@ HydraulicBrake merges the hash you pass with these default options:
 
 You can override any of those parameters.
 
+Async Notifications
+-------------------
+
+HydraulicBrake doesn't provide anything for async notifications, and
+that's a good thing. Just wrap your calls to Airbrake#notify in the
+async library of your choice.
+
 Proxy Support
 -------------
 

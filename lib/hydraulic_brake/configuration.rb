@@ -215,23 +215,6 @@ module HydraulicBrake
       end
     end
 
-    # Should HydraulicBrake send notifications asynchronously
-    # (boolean, nil or callable; default is nil).
-    # Can be used as callable-setter when block provided.
-    def async(&block)
-      if block_given?
-        @async = block
-      end
-      @async
-    end
-    alias_method :async?, :async
-
-    def async=(use_default_or_this)
-      @async = use_default_or_this == true ?
-        default_async_processor :
-        use_default_or_this
-    end
-
     def ca_bundle_path
       if use_system_ssl_cert_chain? && File.exist?(OpenSSL::X509::DEFAULT_CERT_FILE)
         OpenSSL::X509::DEFAULT_CERT_FILE
@@ -254,14 +237,6 @@ module HydraulicBrake
       else
         80
       end
-    end
-
-    # Async notice delivery defaults to girl friday
-    def default_async_processor
-      queue = GirlFriday::WorkQueue.new(nil, :size => 3) do |notice|
-        HydraulicBrake.sender.send_to_airbrake(notice)
-      end
-      lambda {|notice| queue << notice}
     end
   end
 end
