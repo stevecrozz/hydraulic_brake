@@ -92,11 +92,6 @@ inside your configuration:
       config.logger = Logger.new("path/to/your/log/file")
     end
 
-Development
------------
-
-See TESTING.md for instructions on how to run the tests.
-
 Credits
 -------
 
