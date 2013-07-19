@@ -1,11 +1,13 @@
 require 'net/http'
 require 'net/https'
 require 'rubygems'
-require 'hydraulic_brake/version'
+require 'hydraulic_brake/backtrace'
 require 'hydraulic_brake/configuration'
+require 'hydraulic_brake/hook'
 require 'hydraulic_brake/notice'
 require 'hydraulic_brake/sender'
-require 'hydraulic_brake/backtrace'
+require 'hydraulic_brake/test_notification'
+require 'hydraulic_brake/version'
 
 module HydraulicBrake
   API_VERSION = "2.3"
