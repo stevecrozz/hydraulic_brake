@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "hydraulic_brake"
-  s.version = "0.0.0"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Stephen Crosby"]
-  s.date = "2013-07-14"
+  s.date = "2013-07-19"
   s.description = "Sends notifications to an Airbrake server"
   s.email = "stevecrozz@gmail.com"
   s.extra_rdoc_files = [
@@ -34,13 +34,16 @@ Gem::Specification.new do |s|
     "lib/hydraulic_brake.rb",
     "lib/hydraulic_brake/backtrace.rb",
     "lib/hydraulic_brake/configuration.rb",
+    "lib/hydraulic_brake/hook.rb",
     "lib/hydraulic_brake/notice.rb",
     "lib/hydraulic_brake/sender.rb",
+    "lib/hydraulic_brake/test_notification.rb",
     "lib/hydraulic_brake/version.rb",
     "lib/hydraulic_brake_tasks.rb",
     "resources/README.md",
     "resources/ca-bundle.crt",
-    "script/integration_test.rb",
+    "script/deploy_integration_test.rb",
+    "script/notify_integration_test.rb",
     "test/airbrake_2_3.xsd",
     "test/backtrace_test.rb",
     "test/configuration_test.rb",
