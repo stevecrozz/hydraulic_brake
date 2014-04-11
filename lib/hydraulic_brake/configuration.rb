@@ -146,7 +146,7 @@ module HydraulicBrake
       @http_read_timeout        = 5
       @params_filters           = DEFAULT_PARAMS_FILTERS.dup
       @backtrace_filters        = DEFAULT_BACKTRACE_FILTERS.dup
-      @development_environments = %w(development test cucumber)
+      @development_environments = %w(development test)
       @development_lookup       = true
       @notifier_name            = 'HydraulicBrake Notifier'
       @notifier_version         = VERSION

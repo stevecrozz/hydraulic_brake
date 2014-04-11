@@ -5,10 +5,11 @@ require 'rubygems'
 
 $LOAD_PATH << File.expand_path(File.join(File.dirname(__FILE__), "..", "lib"))
 
+require 'mocha/setup'
+require 'bourne'
 require 'shoulda'
 require 'nokogiri'
-require 'bourne'
-require "hydraulic_brake"
+require 'hydraulic_brake'
 
 begin require 'redgreen'; rescue LoadError; end
 
