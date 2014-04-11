@@ -1,5 +1,4 @@
-HydraulicBrake
-========
+# HydraulicBrake [![Build Status](https://travis-ci.org/stevecrozz/hydraulic_brake.svg?branch=master)](https://travis-ci.org/stevecrozz/hydraulic_brake)
 
 This is a replacement notifier gem for the [Airbrake
 gem](https://github.com/airbrake/airbrake) which is used
