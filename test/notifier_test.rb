@@ -131,13 +131,30 @@ class NotifierTest < Test::Unit::TestCase
     config_opts = { 'one' => 'two', 'three' => 'four' }
     stub_notice!
     stub_sender!
-    HydraulicBrake.configuration = stub('config', :merge => config_opts, :public? => true)
+    HydraulicBrake.configuration = stub(
+      'config', :merge => config_opts, :public? => true, :async => false)
 
     HydraulicBrake.notify(exception)
 
     assert_received(HydraulicBrake::Notice, :new) do |expect|
       expect.with(has_entries(config_opts))
     end
+  end
+
+  should "use sync sender when async is false" do
+    HydraulicBrake.configure do |config|
+      config.async = false
+    end
+
+    assert_kind_of HydraulicBrake::Sender, HydraulicBrake.sender
+  end
+
+  should "use async sender when async is true" do
+    HydraulicBrake.configure do |config|
+      config.async = true
+    end
+
+    assert_kind_of HydraulicBrake::AsyncSender, HydraulicBrake.sender
   end
 
   context "building notice JSON for an exception" do

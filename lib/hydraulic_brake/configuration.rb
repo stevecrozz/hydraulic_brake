@@ -4,6 +4,8 @@ module HydraulicBrake
 
     OPTIONS = [
       :api_key,
+      :async,
+      :async_queue_capacity,
       :backtrace_filters,
       :development_environments,
       :development_lookup,
@@ -64,6 +66,14 @@ module HydraulicBrake
 
     # The password to use when logging into your proxy server (if using a proxy)
     attr_accessor :proxy_pass
+
+    # Send the notice to airbrake using a background thread
+    attr_accessor :async
+
+    # Maxmimum number of notices to store in memory. If the number of notices
+    # waiting to be sent to airbrake reaches this value, further notices will
+    # be dropped until the queue size drops.
+    attr_accessor :async_queue_capacity
 
     # A list of parameters that should be filtered out of what is sent to Airbrake.
     # By default, all "password" attributes will have their contents replaced.
@@ -139,6 +149,8 @@ module HydraulicBrake
     alias_method :use_system_ssl_cert_chain?, :use_system_ssl_cert_chain
 
     def initialize
+      @async                    = false
+      @async_queue_capacity     = 100
       @secure                   = false
       @use_system_ssl_cert_chain= false
       @host                     = 'api.airbrake.io'
@@ -155,6 +167,7 @@ module HydraulicBrake
       @rescue_rake_exceptions   = nil
       @user_attributes          = DEFAULT_USER_ATTRIBUTES.dup
       @rake_environment_filters = []
+      @logger                   = Logger.new(STDOUT)
     end
 
     # Takes a block and adds it to the list of backtrace filters. When the filters

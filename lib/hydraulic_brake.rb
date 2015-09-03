@@ -1,6 +1,8 @@
+require 'logger'
 require 'net/http'
 require 'net/https'
 require 'rubygems'
+require 'hydraulic_brake/async_sender'
 require 'hydraulic_brake/backtrace'
 require 'hydraulic_brake/configuration'
 require 'hydraulic_brake/hook'
@@ -75,7 +77,15 @@ module HydraulicBrake
     #   end
     def configure(silent = false)
       yield(configuration)
-      self.sender = Sender.new(configuration)
+
+      if configuration.async
+        self.sender = AsyncSender.new(
+          :sync_sender => Sender.new(configuration),
+          :capacity => configuration.async_queue_capacity)
+      else
+        self.sender = Sender.new(configuration)
+      end
+
       report_ready unless silent
       self.sender
     end
@@ -102,7 +112,7 @@ module HydraulicBrake
     # @option opts [String] :session_data The contents of the user's session
     # @option opts [String] :environment_name The application environment name
     def notify(exception, opts = {})
-      send_notice(build_notice_for(exception, opts))
+      send_notice build_notice_for(exception, opts)
     end
 
     def build_lookup_hash_for(exception, options = {})

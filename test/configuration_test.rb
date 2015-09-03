@@ -5,20 +5,21 @@ class ConfigurationTest < Test::Unit::TestCase
   include DefinesConstants
 
   should "provide default values" do
-    assert_config_default :proxy_host,          nil
-    assert_config_default :proxy_port,          nil
-    assert_config_default :proxy_user,          nil
-    assert_config_default :proxy_pass,          nil
-    assert_config_default :project_root,        nil
-    assert_config_default :environment_name,    nil
-    assert_config_default :logger,              nil
-    assert_config_default :notifier_version,    HydraulicBrake::VERSION
-    assert_config_default :notifier_name,       'HydraulicBrake Notifier'
-    assert_config_default :notifier_url,        'https://github.com/stevecrozz/hydraulic_brake'
-    assert_config_default :secure,              false
-    assert_config_default :host,                'api.airbrake.io'
-    assert_config_default :http_open_timeout,   2
-    assert_config_default :http_read_timeout,   5
+    assert_config_default :async,                false
+    assert_config_default :async_queue_capacity, 100
+    assert_config_default :proxy_host,           nil
+    assert_config_default :proxy_port,           nil
+    assert_config_default :proxy_user,           nil
+    assert_config_default :proxy_pass,           nil
+    assert_config_default :project_root,         nil
+    assert_config_default :environment_name,     nil
+    assert_config_default :notifier_version,     HydraulicBrake::VERSION
+    assert_config_default :notifier_name,        'HydraulicBrake Notifier'
+    assert_config_default :notifier_url,         'https://github.com/stevecrozz/hydraulic_brake'
+    assert_config_default :secure,               false
+    assert_config_default :host,                 'api.airbrake.io'
+    assert_config_default :http_open_timeout,    2
+    assert_config_default :http_read_timeout,    5
     assert_config_default :params_filters,
                           HydraulicBrake::Configuration::DEFAULT_PARAMS_FILTERS
     assert_config_default :backtrace_filters,
@@ -51,6 +52,8 @@ class ConfigurationTest < Test::Unit::TestCase
   end
 
   should "allow values to be overwritten" do
+    assert_config_overridable :async
+    assert_config_overridable :async_queue_capacity
     assert_config_overridable :proxy_host
     assert_config_overridable :proxy_port
     assert_config_overridable :proxy_user
@@ -130,6 +133,11 @@ class ConfigurationTest < Test::Unit::TestCase
   should "be public without an environment name" do
     config = HydraulicBrake::Configuration.new
     assert config.public?
+  end
+
+  should "use the default logger none is set" do
+    config = HydraulicBrake::Configuration.new
+    assert_kind_of Logger, config.logger
   end
 
   should "use the assigned logger if set" do

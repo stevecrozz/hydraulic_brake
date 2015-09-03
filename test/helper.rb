@@ -94,6 +94,7 @@ class Test::Unit::TestCase
     HydraulicBrake.configuration = nil
     HydraulicBrake.configure do |config|
       config.api_key = 'abc123'
+      config.logger = FakeLogger.new
     end
   end
 
@@ -127,6 +128,10 @@ class Test::Unit::TestCase
         :data => { 'user_id' => '5', 'flash' => { 'notice' => 'Logged in successfully' } }
       }
     }
+  end
+
+  def build_notice(exception = nil)
+    HydraulicBrake::Notice.new(build_notice_data(exception))
   end
 
   def assert_caught_and_sent

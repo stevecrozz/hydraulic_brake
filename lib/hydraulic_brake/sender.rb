@@ -13,7 +13,8 @@ module HydraulicBrake
                    Errno::ECONNREFUSED].freeze
 
     def initialize(options = {})
-      [ :proxy_host,
+      [
+        :proxy_host,
         :proxy_port,
         :proxy_user,
         :proxy_pass,
@@ -31,9 +32,9 @@ module HydraulicBrake
 
     # Sends the notice data off to Airbrake for processing.
     #
-    # @param [Notice or String] notice The notice to be sent off
+    # @param [Notice] notice The notice to be sent off
     def send_to_airbrake(notice)
-      data = notice.respond_to?(:to_xml) ? notice.to_xml : notice
+      data = notice.to_xml
       http = setup_http_connection
 
       response = begin
@@ -47,18 +48,13 @@ module HydraulicBrake
       case response
       when Net::HTTPSuccess then
         log :level => :info,
-            :message => "Success: #{response.class}",
-            :response => response
+            :message => success_message_from_response(response)
+        error_id_from_response(response)
       else
         log :level => :error,
             :message => "Failure: #{response.class}",
             :response => response,
             :notice => notice
-      end
-
-      if response && response.respond_to?(:body)
-        error_id = response.body.match(%r{<id[^>]*>(.*?)</id>})
-        error_id[1] if error_id
       end
     rescue => e
       log :level => :error,
@@ -85,12 +81,44 @@ module HydraulicBrake
 
   private
 
+    def success_message_from_response(response)
+      error_url = error_url_from_response(response)
+
+      if error_url
+        "Success: sent error to Airbrake: #{error_url}"
+      else
+        "Success: sent error to Airbrake"
+      end
+    end
+
+    def error_id_from_response(response)
+      if response && response.respond_to?(:body)
+        error_id = response.body.match(%r{<id[^>]*>(.*?)</id>})
+        return error_id[1] if error_id
+      end
+
+      nil
+    rescue
+      nil
+    end
+
+    def error_url_from_response(response)
+      if response && response.respond_to?(:body)
+        error_url = response.body.match(%r{<url[^>]*>(.*?)</url>})
+        return error_url[1] if error_url
+      end
+
+      nil
+    rescue
+      nil
+    end
+
     def url
       URI.parse("#{protocol}://#{host}:#{port}").merge(NOTICES_URI)
     end
 
     def log(opts = {})
-      opts[:logger].send opts[:level], LOG_PREFIX + opts[:message] if opts[:logger]
+      logger.send opts[:level], LOG_PREFIX + opts[:message]
       HydraulicBrake.report_environment_info
       HydraulicBrake.report_response_body(opts[:response].body) if opts[:response] && opts[:response].respond_to?(:body)
       HydraulicBrake.report_notice(opts[:notice]) if opts[:notice]

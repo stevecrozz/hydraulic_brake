@@ -11,7 +11,7 @@ class LoggerTest < Test::Unit::TestCase
   end
 
   def send_notice
-    HydraulicBrake.sender.send_to_airbrake({'foo' => "bar"})
+    HydraulicBrake.sender.send_to_airbrake(build_notice)
   end
 
   def stub_verbose_log

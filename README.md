@@ -75,9 +75,20 @@ HydraulicBrake#notify.
 Async Notifications
 -------------------
 
-HydraulicBrake doesn't provide anything special for async notifications.
-Just wrap your calls to Airbrake#notify in the async library of your
-choice if you want to.
+HydraulicBrake can send notifications for you in the background using a Ruby
+thread. If configured for async notifications, calls to HydraulicBrake::Notify
+will populate an in-memory queue up to a configurable limit. If you reach the
+limit, HydraulicBrake will send an error to HydraulicBrake.logger for every
+additional notice beyond the queue's capacity and this notice will contain
+information about the notice that could not be sent. Shown below are the
+default options, but you may adjust them to suit your needs.
+
+```ruby
+HydraulicBrake.configure do |config|
+  config.async = false
+  config.async_queue_capacity = 100
+end
+```
 
 Proxy Support
 -------------
