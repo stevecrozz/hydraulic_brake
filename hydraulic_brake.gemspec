@@ -16,7 +16,6 @@ Gem::Specification.new do |s|
     "README.md"
   ]
   s.files = [
-    ".rbenv-version",
     ".rvmrc",
     ".yardopts",
     "Gemfile",

@@ -13,14 +13,14 @@ class SenderTest < Test::Unit::TestCase
   end
 
   def send_exception(args = {})
-    notice = args.delete(:notice) || build_notice_data
-    notice.stubs(:to_xml)
+    notice = args.delete(:notice) || HydraulicBrake::Notice.new(args)
     sender = args.delete(:sender) || build_sender(args)
     sender.send_to_airbrake(notice)
   end
 
-  def stub_http(options = {})
-    response = stub(:body => options[:body] || 'body')
+  def stub_http(response=nil)
+    response ||= stub(:body => 'body')
+
     http = stub(:post          => response,
                 :read_timeout= => nil,
                 :open_timeout= => nil,
@@ -29,19 +29,6 @@ class SenderTest < Test::Unit::TestCase
                 :use_ssl=      => nil)
     Net::HTTP.stubs(:new => http)
     http
-  end
-
-  should "post to Airbrake with XML passed" do
-    xml_notice = HydraulicBrake::Notice.new(:error_class => "FooBar", :error_message => "Foo Bar").to_xml
-
-    http = stub_http
-
-    sender = build_sender
-    sender.send_to_airbrake(xml_notice)
-
-    assert_received(http, :post) do |expect|
-      expect.with(anything, xml_notice, HydraulicBrake::HEADERS)
-    end
   end
 
   should "post to Airbrake with a Notice instance passed" do
@@ -87,7 +74,12 @@ class SenderTest < Test::Unit::TestCase
   end
 
   should "return the created group's id on successful posting" do
-    http = stub_http(:body => '<id type="integer">3799307</id>')
+    response = Net::HTTPSuccess.new(1.0, 200, "OK")
+    def response.body
+      '<id type="integer">3799307</id>'
+    end
+
+    stub_http(response)
     assert_equal "3799307", send_exception(:secure => false)
   end
 
