@@ -104,7 +104,7 @@ HydraulicBrake.configure do |config|
   config.proxy_pass = bar # optional
 end
 ```
-      
+
 Logging
 ------------
 
@@ -115,22 +115,6 @@ logger, just pass another `Logger` instance inside your configuration:
 HydraulicBrake.configure do |config|
   config.logger = Logger.new("path/to/your/log/file")
 end
-```
-
-Deploy Hook
------------
-
-HydraulicBrake can notify Airbrake whenever you deploy your app. Just
-call HydraulicBrake::Hook#deploy whenever you deploy:
-
-```ruby
-HydraulicBrake::Hook.deploy({
-  :scm_revision => "cd6b969f66ad0794c7117d5030f926b49f82b038",
-  :scm_repository => "stevecrozz/hydraulic_brake",
-  :local_username => "stevecrozz",
-  :rails_env => "production", # everything is rails, right?
-  :message => "Another deployment hook brought to you by HydraulicBrake"
-})
 ```
 
 Credits

@@ -12,6 +12,18 @@ class SenderTest < Test::Unit::TestCase
     end
   end
 
+  def build_logger
+    klass = Class.new do
+      attr_reader :errors, :infos, :debugs
+
+      def error(i); @errors ||= []; @errors << i; end
+      def info(i); @infos ||= []; @infos << i; end
+      def debug(i); @debugs ||= []; @debugs << i; end
+    end
+
+    klass.new
+  end
+
   def send_exception(args = {})
     notice = args.delete(:notice) || HydraulicBrake::Notice.new(args)
     sender = args.delete(:sender) || build_sender(args)
@@ -81,6 +93,24 @@ class SenderTest < Test::Unit::TestCase
 
     stub_http(response)
     assert_equal "3799307", send_exception(:secure => false)
+  end
+
+  should "log the url to the error on successful posting" do
+    response = Net::HTTPSuccess.new(1.0, 200, "OK")
+    def response.body
+      '<id type="integer">3799307</id><url>http://some-url.com/foo</url>'
+    end
+
+    logger = build_logger
+
+    HydraulicBrake.configure do |c|
+      c.logger = logger
+    end
+
+    stub_http(response)
+    send_exception(:secure => false)
+    matcher = %r{Success: sent error to Airbrake: http://some-url.com/foo}
+    assert_match matcher, logger.infos.first
   end
 
   context "when encountering exceptions: " do
