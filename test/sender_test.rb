@@ -9,6 +9,7 @@ class SenderTest < Test::Unit::TestCase
   def build_sender(opts = {})
     HydraulicBrake.configure do |conf|
       opts.each {|opt, value| conf.send(:"#{opt}=", value) }
+      conf.async = false
     end
   end
 

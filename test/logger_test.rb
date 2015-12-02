@@ -18,13 +18,9 @@ class LoggerTest < Test::Unit::TestCase
     HydraulicBrake.stubs(:write_verbose_log)
   end
 
-  def configure
-    HydraulicBrake.configure { |config| }
-  end
-
   should "report that notifier is ready when configured" do
     stub_verbose_log
-    configure
+    reset_config
     assert_logged /Notifier (.*) ready/
   end
 

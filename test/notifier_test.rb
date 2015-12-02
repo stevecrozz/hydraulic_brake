@@ -53,7 +53,10 @@ class NotifierTest < Test::Unit::TestCase
     HydraulicBrake::Sender.stubs(:new => sender)
     configuration = nil
 
-    HydraulicBrake.configure { |yielded_config| configuration = yielded_config }
+    HydraulicBrake.configure do |c|
+      c.async = false
+      configuration = c
+    end
 
     assert_received(HydraulicBrake::Sender, :new) { |expect| expect.with(configuration) }
     assert_equal sender, HydraulicBrake.sender

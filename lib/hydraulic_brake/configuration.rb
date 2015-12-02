@@ -149,7 +149,7 @@ module HydraulicBrake
     alias_method :use_system_ssl_cert_chain?, :use_system_ssl_cert_chain
 
     def initialize
-      @async                    = false
+      @async                    = true
       @async_queue_capacity     = 100
       @secure                   = false
       @use_system_ssl_cert_chain= false

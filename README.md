@@ -85,7 +85,7 @@ default options, but you may adjust them to suit your needs.
 
 ```ruby
 HydraulicBrake.configure do |config|
-  config.async = false
+  config.async = true
   config.async_queue_capacity = 100
 end
 ```

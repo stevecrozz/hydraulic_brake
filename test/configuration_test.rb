@@ -5,7 +5,7 @@ class ConfigurationTest < Test::Unit::TestCase
   include DefinesConstants
 
   should "provide default values" do
-    assert_config_default :async,                false
+    assert_config_default :async,                true
     assert_config_default :async_queue_capacity, 100
     assert_config_default :proxy_host,           nil
     assert_config_default :proxy_port,           nil

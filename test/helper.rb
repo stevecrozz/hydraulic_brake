@@ -95,6 +95,7 @@ class Test::Unit::TestCase
   def reset_config
     HydraulicBrake.configuration = nil
     HydraulicBrake.configure do |config|
+      config.async = false
       config.api_key = 'abc123'
       config.logger = FakeLogger.new
     end
