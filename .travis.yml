@@ -1,7 +1,0 @@
-language: ruby
-rvm:
-  - 1.9.3
-  - 2.1.1
-  - jruby-head
-  - rbx
-script: bundle exec rake test
